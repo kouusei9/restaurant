@@ -19,29 +19,42 @@ class RestaurantViewModel @Inject constructor(
     private val gourmetRepository: HotPepperGourmetRepository
 ) : ViewModel() {
     private val _restaurantViewStateFlow =
-        MutableStateFlow<RestaurantViewState>(RestaurantViewState.Loading)
+        MutableStateFlow<RestaurantViewState>(RestaurantViewState.RequestPermission)
     val restaurantViewState: StateFlow<RestaurantViewState> = _restaurantViewStateFlow.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val result = gourmetRepository.searchShops(
-                    keyword = "",
-                    lat = 34.67,
-                    lng = 135.52,
-                )
-                when (result) {
-                    is ApiResult.Error -> {
-                        _restaurantViewStateFlow.value = RestaurantViewState.Error(result.message)
-                    }
 
-                    is ApiResult.Success -> {
-                        _restaurantViewStateFlow.value =
-                            RestaurantViewState.Success(result.data.map { it.toShopSummary() })
-                    }
+    }
+
+    suspend fun loadShopList(lat: Double, lng: Double) {
+        withContext(Dispatchers.IO) {
+            val result = gourmetRepository.searchShops(
+                keyword = "",
+                lat = lat,
+                lng = lng,
+            )
+            when (result) {
+                is ApiResult.Error -> {
+                    _restaurantViewStateFlow.value = RestaurantViewState.Error(result.message)
+                }
+
+                is ApiResult.Success -> {
+                    _restaurantViewStateFlow.value =
+                        RestaurantViewState.Success(result.data.map { it.toShopSummary() }, lat, lng)
                 }
             }
         }
+    }
+
+    fun permissionSuccess(lat: Double, lng: Double) {
+        _restaurantViewStateFlow.value = RestaurantViewState.Loading
+        viewModelScope.launch {
+            loadShopList(lat, lng)
+        }
+    }
+
+    fun errMessage(message: String) {
+        _restaurantViewStateFlow.value = RestaurantViewState.Error(message)
     }
 }
 

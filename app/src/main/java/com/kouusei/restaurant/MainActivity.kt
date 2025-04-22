@@ -1,9 +1,13 @@
 package com.kouusei.restaurant
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -23,22 +27,28 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -46,21 +56,27 @@ import com.kouusei.restaurant.presentation.RestaurantViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
+import androidx.compose.runtime.*
+import androidx.core.content.ContextCompat
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
         enableEdgeToEdge()
         setContent {
             RestaurantTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//                    Greeting(
-//                        name = "Android",
-//                        modifier = Modifier.padding(innerPadding)
-//                    )
-                    HomeScreen(modifier = Modifier.padding(innerPadding))
+                    HomeScreen(modifier = Modifier.padding(innerPadding), fusedLocationClient)
                 }
             }
         }
@@ -68,26 +84,94 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    val singapore = LatLng(1.35, 103.87)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(singapore, 10f)
+fun LocationHandler(
+    fusedLocationClient: FusedLocationProviderClient,
+    onSuccess: (Double, Double) -> Unit,
+    onFailed: (String) -> Unit
+) {
+    val context = LocalContext.current
+    var locationText by remember { mutableStateOf<String?>(null) }
+
+    // permission（recomposition when change）
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
     }
-//    GoogleMap(
-//        modifier = Modifier.fillMaxSize(),
-//        cameraPositionState = cameraPositionState
-//    ) {
-//        Marker(
-//            state = MarkerState(position = singapore),
-//            title = "Singapore",
-//            snippet = "Marker in Singapore"
-//        )
-//    }
+
+    // request permission Launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasPermission = isGranted
+        if (isGranted) {
+            getLastLocation(
+                fusedLocationClient,
+                onSuccess = onSuccess, onFailed = onFailed
+            )
+        } else {
+            locationText = "Permission Denied"
+        }
+    }
+
+    // get permission when launch first time
+    LaunchedEffect(hasPermission) {
+        if (hasPermission) {
+            getLastLocation(
+                fusedLocationClient,
+                onSuccess = onSuccess, onFailed = onFailed
+            )
+        }
+    }
+
+    //TODO move text to string xml.
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (hasPermission) {
+            Text(text = locationText ?: "Loading location...")
+        } else {
+            Button(onClick = {
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }) {
+                Text("Request Location Permission")
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(text = locationText ?: "Permission not granted yet")
+        }
+    }
 }
 
-@Composable
-fun SearchBar() {
-
+// request location
+fun getLastLocation(
+    fusedLocationClient: FusedLocationProviderClient,
+    onSuccess: (Double, Double) -> Unit,
+    onFailed: (String) -> Unit,
+) {
+    try {
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    onSuccess(location.latitude, location.longitude)
+                } else {
+                    onFailed("Location unavailable")
+                }
+            }
+            .addOnFailureListener {
+                onFailed("Failed to get location: ${it.message}")
+            }
+    } catch (e: SecurityException) {
+        onFailed("SecurityException: ${e.message}")
+    }
 }
 
 @Preview(showBackground = true)
@@ -116,7 +200,7 @@ fun GreetingPreview() {
 }
 
 @Composable
-fun HomeScreen(modifier: Modifier) {
+fun HomeScreen(modifier: Modifier, fusedLocationClient: FusedLocationProviderClient) {
     var restaurantViewModel: RestaurantViewModel = viewModel()
 
     val state by restaurantViewModel.restaurantViewState.collectAsState()
@@ -127,9 +211,19 @@ fun HomeScreen(modifier: Modifier) {
 
         RestaurantViewState.Loading -> LoadingScreen()
         is RestaurantViewState.Success -> {
+
+//            MapView((state as RestaurantViewState.Success).lat, (state as RestaurantViewState.Success).lng)
             RestaurantList(
                 shops = (state as RestaurantViewState.Success).shopList,
                 modifier = modifier
+            )
+        }
+
+        RestaurantViewState.RequestPermission -> {
+            LocationHandler(
+                fusedLocationClient,
+                onSuccess = restaurantViewModel::permissionSuccess,
+                onFailed = restaurantViewModel::errMessage
             )
         }
     }
@@ -157,6 +251,24 @@ fun ErrorScreen(errorStr: String) {
 }
 
 @Composable
+fun MapView(lat: Double, lng: Double) {
+    val pos = LatLng(lat, lng)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(pos, 1f)
+    }
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState
+    ) {
+        Marker(
+            state = MarkerState(position = pos),
+            title = "current",
+            snippet = "Marker in Singapore"
+        )
+    }
+}
+
+@Composable
 fun RestaurantList(shops: List<ShopSummary>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier
@@ -172,6 +284,7 @@ fun RestaurantList(shops: List<ShopSummary>, modifier: Modifier = Modifier) {
 
 @Composable
 fun RestaurantItemBar(shop: ShopSummary) {
+    // TODO move color to theme
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -203,7 +316,6 @@ fun RestaurantItemBar(shop: ShopSummary) {
                 color = Color(0xFF000000), fontSize = 20.sp,
                 modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
             )
-//            (modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -222,10 +334,6 @@ fun RestaurantItemBar(shop: ShopSummary) {
                 }
 
             }
-
-//            }
-
-
         }
     }
 }
@@ -237,3 +345,5 @@ fun debugPlaceholder(@DrawableRes debugPreview: Int) =
     } else {
         null
     }
+
+

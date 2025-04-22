@@ -91,6 +91,9 @@ dependencies {
     // coil
     implementation(libs.io.coil)
 
+    // location
+    implementation(libs.android.gms.play.services.location)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
