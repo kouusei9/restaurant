@@ -1,9 +1,12 @@
 package com.kouusei.restaurant.presentation
 
+import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kouusei.restaurant.data.api.HotPepperGourmetRepository
+import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.utils.ApiResult
+import com.kouusei.restaurant.presentation.common.DistanceRange
 import com.kouusei.restaurant.presentation.mappers.toShopSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.text.isNotEmpty
 
 @HiltViewModel
 class RestaurantViewModel @Inject constructor(
@@ -22,17 +26,100 @@ class RestaurantViewModel @Inject constructor(
         MutableStateFlow<RestaurantViewState>(RestaurantViewState.RequestPermission)
     val restaurantViewState: StateFlow<RestaurantViewState> = _restaurantViewStateFlow.asStateFlow()
 
+    private val _shopsByLocation = MutableStateFlow<List<Shop>>(emptyList())
+
+    private val _shopNames = MutableStateFlow<List<String>>(emptyList())
+    val shopNames = _shopNames.asStateFlow()
+
+    private var _location: Location? = null
+
+    private val _distanceRange = MutableStateFlow<DistanceRange>(DistanceRange.RANGE_1000M)
+    val distanceRange: StateFlow<DistanceRange> = _distanceRange.asStateFlow()
+
+    private val _keyword = MutableStateFlow<String>("")
+    val keyword: StateFlow<String> = _keyword.asStateFlow()
+
     init {
 
     }
 
-    suspend fun loadShopList(lat: Double, lng: Double) {
-        withContext(Dispatchers.IO) {
-            val result = gourmetRepository.searchShops(
-                keyword = "",
-                lat = lat,
-                lng = lng,
+    fun onKeyWordChange(keyword: String) {
+        _keyword.value = keyword
+    }
+
+    fun reloadShopList() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                loadShopListByKeywordAndLocation(
+                    keyword.value,
+                    _location?.latitude,
+                    _location?.longitude,
+                    distanceRange.value
+                )
+            }
+        }
+    }
+
+    fun reloadShopListName() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+//                loadShopNameListByKeywordAndLocation(
+//                    keyword.value,
+//                    _location?.latitude,
+//                    _location?.longitude,
+//                    distanceRange.value
+//                )
+            }
+        }
+    }
+
+    fun distanceRangeChange(distanceRange: DistanceRange) {
+        _distanceRange.value = distanceRange
+        reloadShopList()
+    }
+
+    suspend fun loadShopListByLocation(lat: Double, lng: Double, range: DistanceRange) {
+        loadShopListByKeywordAndLocation("", lat, lng, range)
+    }
+
+    suspend fun loadShopNameList() {
+        val result =
+            if (keyword.value.isNotEmpty() && distanceRange.value == DistanceRange.RANGE_NO)
+                gourmetRepository.searchShops(
+                    keyword = keyword.value, null, null, null
+                ) else gourmetRepository.searchShops(
+                keyword = keyword.value,
+                lat = _location?.latitude,
+                lng = _location?.longitude,
+                distanceRange.value.value
             )
+        when (result) {
+            is ApiResult.Error -> {
+//                _restaurantViewStateFlow.value = RestaurantViewState.Error(result.message)
+            }
+
+            is ApiResult.Success -> {
+                _shopNames.value = result.data.map { it.name }
+            }
+        }
+    }
+
+    suspend fun loadShopListByKeywordAndLocation(
+        keyword: String,
+        lat: Double?,
+        lng: Double?,
+        range: DistanceRange
+    ) {
+        withContext(Dispatchers.IO) {
+            val result =
+                if (keyword.isNotEmpty() && range == DistanceRange.RANGE_NO) gourmetRepository.searchShops(
+                    keyword = keyword, null, null, null
+                ) else gourmetRepository.searchShops(
+                    keyword = keyword,
+                    lat = lat,
+                    lng = lng,
+                    range.value
+                )
             when (result) {
                 is ApiResult.Error -> {
                     _restaurantViewStateFlow.value = RestaurantViewState.Error(result.message)
@@ -40,17 +127,44 @@ class RestaurantViewModel @Inject constructor(
 
                 is ApiResult.Success -> {
                     _restaurantViewStateFlow.value =
-                        RestaurantViewState.Success(result.data.map { it.toShopSummary() }, lat, lng)
+                        RestaurantViewState.Success(result.data.map { it.toShopSummary() })
                 }
             }
         }
     }
 
-    fun permissionSuccess(lat: Double, lng: Double) {
-        _restaurantViewStateFlow.value = RestaurantViewState.Loading
-        viewModelScope.launch {
-            loadShopList(lat, lng)
+    fun loadShopNameListByKeyword(keyword: String) {
+        if (keyword.isEmpty()) {
+            _shopNames.value = emptyList<String>()
+            return
         }
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val result = gourmetRepository.searchShopsByKeyword(keyword = keyword)
+                when (result) {
+                    is ApiResult.Error -> {
+//                        _restaurantViewStateFlow.value = RestaurantViewState.Error(result.message)
+                    }
+
+                    is ApiResult.Success -> {
+                        _shopNames.value = result.data.map { it.name }
+                    }
+                }
+            }
+        }
+    }
+
+    fun permissionSuccess(location: Location) {
+        _restaurantViewStateFlow.value = RestaurantViewState.Loading
+        _location = location
+        viewModelScope.launch {
+            // default
+            loadDefault(location)
+        }
+    }
+
+    suspend fun loadDefault(location: Location) {
+        loadShopListByLocation(location.latitude, location.longitude, DistanceRange.RANGE_1000M)
     }
 
     fun errMessage(message: String) {
