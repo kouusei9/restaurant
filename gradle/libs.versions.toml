@@ -22,6 +22,9 @@ coil = "2.4.0"
 
 gmsLocation = "21.3.0"
 
+nav_version = "2.8.9"
+serialization = "1.6.3"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -43,8 +46,14 @@ android-maps-compose = { group = "com.google.maps.android", name = "maps-compose
 android-maps-compose-utils = { group = "com.google.maps.android", name = "maps-compose-utils", version.ref = "mapCompose" }
 android-maps-compose-widgets = { group = "com.google.maps.android", name = "maps-compose-widgets", version.ref = "mapCompose" }
 
+# navigation
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "nav_version" }
+
+# serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+
 # location
-android-gms-play-services-location = {group = "com.google.android.gms", name = "play-services-location", version.ref = "gmsLocation"}
+android-gms-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "gmsLocation" }
 
 # retrofit
 squareup-retrofit2 = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
@@ -69,4 +78,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 # hilt
 dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+
+# serialization
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
