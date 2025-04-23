@@ -6,7 +6,8 @@ data class ShopResponse(
 
 data class Results(
     val shop: List<Shop>,
-    val results_available: Int
+    val results_available: Int,
+    val error: Error?
 )
 
 data class Shop(
@@ -21,8 +22,10 @@ data class Shop(
     val access: String,
     val mobile_access: String,
     val open: String,
+    val close: String,
     val lat: Double,
-    val lng: Double
+    val lng: Double,
+    val capacity: Int,
 )
 
 data class Genre(
