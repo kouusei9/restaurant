@@ -17,12 +17,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.kouusei.restaurant.presentation.entities.SearchFilters
 
 
 enum class DistanceRange(val value: Int, val description: String) {
@@ -44,18 +44,16 @@ enum class Filter(val value: String, val description: String) {
     Filter_FreeDrink("free_drink", "飲み放題"),
     Filter_FreeFood("free_food", "食べ放題"),
     Filter_PrivateRoom("private_room", "個室あり");
-
 }
 
 @Composable
 fun FilterView(
     filterList: List<Filter> = Filter.entries,
     onDistanceChange: (DistanceRange) -> Unit,
-    onFilterChange: (List<Filter>) -> Unit,
-    selectedDistance: DistanceRange
+    onFilterChange: (Filter) -> Unit,
+    selectedDistance: DistanceRange,
+    state: SearchFilters
 ) {
-    val selectedFilters = remember { mutableStateListOf<Filter>() }
-
     // 控制距离下拉菜单
     var distanceMenuExpanded by remember { mutableStateOf(false) }
     val distanceOptions = DistanceRange.entries
@@ -111,14 +109,8 @@ fun FilterView(
         items(filterList) { item ->
             FilterChip(
                 label = item.description,
-                isSelected = selectedFilters.contains(item),
-                onClick = {
-                    if (selectedFilters.contains(item)) {
-                        selectedFilters.remove(item)
-                    } else {
-                        selectedFilters.add(item)
-                    }
-                }
+                isSelected = state.getValue(item),
+                onClick = { onFilterChange(item) }
             )
         }
     }

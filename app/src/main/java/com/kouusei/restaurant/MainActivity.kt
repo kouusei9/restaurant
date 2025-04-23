@@ -234,6 +234,9 @@ fun HomeScreen(
     val state by restaurantViewModel.restaurantViewState.collectAsState()
 
     val distanceRange by restaurantViewModel.distanceRange.collectAsState()
+
+    val searchFilters by restaurantViewModel.searchFilters.collectAsState()
+
     when (state) {
         is RestaurantViewState.Error -> {
             ErrorScreen((state as RestaurantViewState.Error).message)
@@ -247,9 +250,10 @@ fun HomeScreen(
                         restaurantViewModel.distanceRangeChange(it)
                     },
                     onFilterChange = {
-
+                        restaurantViewModel.toggleFilter(it)
                     },
-                    selectedDistance = distanceRange
+                    selectedDistance = distanceRange,
+                    state = searchFilters
                 )
                 if (markerType == MarkerType.List) {
                     RestaurantList(
