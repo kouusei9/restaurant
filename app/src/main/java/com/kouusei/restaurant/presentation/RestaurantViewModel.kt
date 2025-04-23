@@ -1,12 +1,13 @@
 package com.kouusei.restaurant.presentation
 
-import android.location.Location
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.LatLng
 import com.kouusei.restaurant.data.api.HotPepperGourmetRepository
-import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.utils.ApiResult
 import com.kouusei.restaurant.presentation.common.DistanceRange
+import com.kouusei.restaurant.presentation.mappers.toLatLngBounds
 import com.kouusei.restaurant.presentation.mappers.toShopSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -22,16 +23,16 @@ import kotlin.text.isNotEmpty
 class RestaurantViewModel @Inject constructor(
     private val gourmetRepository: HotPepperGourmetRepository
 ) : ViewModel() {
+    val TAG = "RestaurantViewModel"
+
     private val _restaurantViewStateFlow =
         MutableStateFlow<RestaurantViewState>(RestaurantViewState.RequestPermission)
     val restaurantViewState: StateFlow<RestaurantViewState> = _restaurantViewStateFlow.asStateFlow()
 
-    private val _shopsByLocation = MutableStateFlow<List<Shop>>(emptyList())
-
     private val _shopNames = MutableStateFlow<List<String>>(emptyList())
     val shopNames = _shopNames.asStateFlow()
 
-    private var _location: Location? = null
+    private var _location: LatLng? = null
 
     private val _distanceRange = MutableStateFlow<DistanceRange>(DistanceRange.RANGE_1000M)
     val distanceRange: StateFlow<DistanceRange> = _distanceRange.asStateFlow()
@@ -126,8 +127,15 @@ class RestaurantViewModel @Inject constructor(
                 }
 
                 is ApiResult.Success -> {
+                    val shopList = result.data.map { it.toShopSummary() }
+                    val boundingBox =
+                        if (shopList.isEmpty()) listOf<LatLng>(_location!!).toLatLngBounds() else
+                            result.data.map { it.toShopSummary().location }.toLatLngBounds()
                     _restaurantViewStateFlow.value =
-                        RestaurantViewState.Success(result.data.map { it.toShopSummary() })
+                        RestaurantViewState.Success(
+                            shopList = shopList,
+                            boundingBox = boundingBox
+                        )
                 }
             }
         }
@@ -154,16 +162,17 @@ class RestaurantViewModel @Inject constructor(
         }
     }
 
-    fun permissionSuccess(location: Location) {
+    fun permissionSuccess(location: LatLng) {
         _restaurantViewStateFlow.value = RestaurantViewState.Loading
         _location = location
+        Log.d(TAG, "permissionSuccess: location: $_location")
         viewModelScope.launch {
             // default
             loadDefault(location)
         }
     }
 
-    suspend fun loadDefault(location: Location) {
+    suspend fun loadDefault(location: LatLng) {
         loadShopListByLocation(location.latitude, location.longitude, DistanceRange.RANGE_1000M)
     }
 

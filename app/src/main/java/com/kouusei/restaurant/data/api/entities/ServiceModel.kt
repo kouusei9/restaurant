@@ -1,11 +1,12 @@
-package com.kouusei.restaurant.data.api.model
+package com.kouusei.restaurant.data.api.entities
 
 data class ShopResponse(
     val results: Results
 )
 
 data class Results(
-    val shop: List<Shop>
+    val shop: List<Shop>,
+    val results_available: Int
 )
 
 data class Shop(
@@ -19,7 +20,9 @@ data class Shop(
     val catch: String,
     val access: String,
     val mobile_access: String,
-    val open: String
+    val open: String,
+    val lat: Double,
+    val lng: Double
 )
 
 data class Genre(
