@@ -107,25 +107,24 @@ class RestaurantViewModel @Inject constructor(
     }
 
     suspend fun loadShopNameList() {
-        val result =
-            if (keyword.value.isNotEmpty() && distanceRange.value == DistanceRange.RANGE_NO)
-                gourmetRepository.searchShops(
-                    keyword = keyword.value, null, null, null, searchFilters.value.toQueryMap()
-                ) else gourmetRepository.searchShops(
-                keyword = keyword.value,
-                lat = _location?.latitude,
-                lng = _location?.longitude,
-                distanceRange.value.value, searchFilters.value.toQueryMap()
+        if (keyword.value.isNotEmpty()) {
+            val result = gourmetRepository.searchShopNames(
+                keyword = keyword.value
             )
-        when (result) {
-            is ApiResult.Error -> {
+            when (result) {
+                is ApiResult.Error -> {
 //                _restaurantViewStateFlow.value = RestaurantViewState.Error(result.message)
-            }
+                    Log.d(TAG, "loadShopNameList: ${result.message}")
+                }
 
-            is ApiResult.Success -> {
-                _shopNames.value = result.data.map { it.name }
+                is ApiResult.Success -> {
+                    _shopNames.value = result.data.map { it.name }
+                }
             }
+        } else {
+            _shopNames.value = emptyList<String>()
         }
+
     }
 
     suspend fun loadShopListByKeywordAndLocation(
@@ -160,6 +159,14 @@ class RestaurantViewModel @Inject constructor(
                             boundingBox = boundingBox
                         )
                 }
+            }
+        }
+    }
+
+    fun loadMore() {
+        viewModelScope.launch{
+            withContext(Dispatchers.IO) {
+
             }
         }
     }
