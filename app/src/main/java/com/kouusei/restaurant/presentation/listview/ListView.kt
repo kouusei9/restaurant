@@ -2,6 +2,7 @@ package com.kouusei.restaurant.presentation.listview
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,7 +39,11 @@ import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
 
 @Composable
-fun RestaurantList(shops: List<ShopSummary>, modifier: Modifier = Modifier) {
+fun RestaurantList(
+    shops: List<ShopSummary>,
+    modifier: Modifier = Modifier,
+    onNavDetail: (id: String) -> Unit
+) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -46,13 +51,16 @@ fun RestaurantList(shops: List<ShopSummary>, modifier: Modifier = Modifier) {
             .background(Color(0xFFFFFFFC))
     ) {
         items(shops, key = { it.id }) {
-            RestaurantItemBar(it)
+            RestaurantItemBar(it, onNavDetail)
         }
     }
 }
 
 @Composable
-fun RestaurantItemBar(shop: ShopSummary) {
+fun RestaurantItemBar(
+    shop: ShopSummary,
+    onNavDetail: (id: String) -> Unit
+) {
     // TODO move color to theme
     Row(
         modifier = Modifier
@@ -67,6 +75,9 @@ fun RestaurantItemBar(shop: ShopSummary) {
             )
             .clip(RoundedCornerShape(8.dp))
             .background(color = MaterialTheme.colorScheme.surfaceContainer)
+            .clickable {
+                onNavDetail(shop.id)
+            }
     ) {
         Box(modifier = Modifier.weight(1f)) {
             AsyncImage(
@@ -148,7 +159,8 @@ fun RestaurantListPreview() {
                     access = "近鉄大阪上本町駅6出dddddddddd口より徒歩約9分",
                     location = LatLng(1.0, 1.0)
                 )
-            )
+            ),
+            onNavDetail = {}
         )
     }
 }
