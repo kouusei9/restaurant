@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.dagger.hilt.android) apply false
     alias(libs.plugins.devtools.ksp) apply false
+    kotlin("plugin.serialization") version libs.versions.kotlin.get()
 }
 
 buildscript {

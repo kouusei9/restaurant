@@ -1,5 +1,6 @@
 package com.kouusei.restaurant
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,46 +27,25 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-
-/**
- * An enumeration of the different marker types.
- */
-enum class MarkerType(
-    val title: Int,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
-) {
-    Map(
-        title = R.string.map,
-        selectedIcon = Icons.Filled.Place,
-        unselectedIcon = Icons.Outlined.Place,
-    ),
-    List(
-        title = R.string.list,
-        selectedIcon = Icons.Filled.List,
-        unselectedIcon = Icons.Outlined.List,
-
-        ),
-    SaveList(
-        title = R.string.save_list,
-        selectedIcon = Icons.Filled.FavoriteBorder,
-        unselectedIcon = Icons.Outlined.FavoriteBorder,
-    )
-}
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import kotlin.collections.List
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RestaurantTopBar(
     keyword: String,
-    suggestions: List<String> = emptyList(),
+    suggestions: List<String>,
     onKeywordChange: (String) -> Unit,
     onSearch: () -> Unit,
 ) {
@@ -137,24 +117,73 @@ fun RestaurantTopBar(
  * A bottom navigation composable to select the kind of markers to show.
  */
 @Composable
-fun BottomNav(selectedScreen: MarkerType, onMarkerTypeClicked: (MarkerType) -> Unit) {
+fun BottomNav(
+    nav: NavHostController,
+) {
+    var selectedScreen by rememberSaveable {
+        mutableStateOf<String>(Map.route)
+    }
+    val navBackStackEntry by nav.currentBackStackEntryAsState()
+    LaunchedEffect(navBackStackEntry) {
+        selectedScreen = navBackStackEntry?.destination?.route ?: selectedScreen
+    }
+
+    val TAG = "BottomNav"
+    LaunchedEffect(selectedScreen) {
+        Log.d(TAG, "BottomNav: $selectedScreen")
+    }
+
+    val topLevelRoutes = listOf(
+        TopLevelRoute(
+            stringResource(R.string.map),
+            Map,
+            selectedIcon = Icons.Filled.Place,
+            unSelectedIcon = Icons.Outlined.Place
+        ),
+        TopLevelRoute(
+            stringResource(R.string.list),
+            List,
+            selectedIcon = Icons.Filled.List,
+            unSelectedIcon = Icons.Outlined.List
+        ),
+        TopLevelRoute(
+            stringResource(R.string.save_list),
+            Favorites,
+            selectedIcon = Icons.Filled.FavoriteBorder,
+            unSelectedIcon = Icons.Outlined.FavoriteBorder
+        )
+    )
     NavigationBar {
-        MarkerType.entries.forEach { markerType ->
-            val selected = selectedScreen == markerType
+        topLevelRoutes.forEach { topLevelRoute ->
+            val selected = selectedScreen == topLevelRoute.route.route
 
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    onMarkerTypeClicked(markerType)
+                    Log.d(TAG, "BottomNav: Click ${topLevelRoute.route.route}")
+                    nav.navigate(topLevelRoute.route.route) {
+                        // Pop up to the start destination of the graph to
+                        // avoid building up a large stack of destinations
+                        // on the back stack as users select items
+                        popUpTo(nav.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        // Avoid multiple copies of the same destination when
+                        // reselecting the same item
+                        launchSingleTop = true
+                        // Restore state when reselecting a previously selected item
+                        restoreState = true
+                    }
+                    selectedScreen = topLevelRoute.route.route
                 },
                 label = {
-                    Text(text = stringResource(id = markerType.title))
+                    Text(text = topLevelRoute.name)
                 },
                 alwaysShowLabel = true,
                 icon = {
                     Icon(
-                        imageVector = if (selected) markerType.selectedIcon else markerType.unselectedIcon,
-                        contentDescription = stringResource(id = markerType.title)
+                        imageVector = if (selected) topLevelRoute.selectedIcon else topLevelRoute.unSelectedIcon,
+                        contentDescription = topLevelRoute.route.route
                     )
                 }
             )

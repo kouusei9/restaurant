@@ -3,15 +3,25 @@ package com.kouusei.restaurant
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseIn
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -26,19 +36,26 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
+import com.kouusei.restaurant.presentation.DetailViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.common.FilterView
+import com.kouusei.restaurant.presentation.detailview.DetailView
 import com.kouusei.restaurant.presentation.listview.RestaurantList
 import com.kouusei.restaurant.presentation.mapview.MapView
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
@@ -47,7 +64,7 @@ import kotlinx.coroutines.delay
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
+    val TAG = "MainActivity"
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,10 +74,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RestaurantTheme {
-                var selectedMarkerType by rememberSaveable {
-                    mutableStateOf(MarkerType.List)
-                }
-
                 var restaurantViewModel: RestaurantViewModel = viewModel()
                 val shopNames by restaurantViewModel.shopNames.collectAsState()
 
@@ -76,59 +89,129 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                var currentRoute = navBackStackEntry?.destination?.route
+
+                LaunchedEffect(navBackStackEntry) {
+                    currentRoute = navBackStackEntry?.destination?.route
+                    Log.d(
+                        TAG,
+                        "onCreate: $currentRoute, Map route:${Map.route} List route:${List.route}"
+                    )
+                }
+
                 Scaffold(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background),
                     topBar = {
-                        RestaurantTopBar(
-                            keyword,
-                            onKeywordChange = {
-                                restaurantViewModel.onKeyWordChange(it)
-                            },
-                            onSearch = {
-                                restaurantViewModel.reloadShopList()
-                            },
-                            suggestions = shopNames
-                        )
+                        AnimatedVisibility(visible = currentRoute == Map.route || currentRoute == List.route) {
+                            RestaurantTopBar(
+                                keyword,
+                                onKeywordChange = {
+                                    restaurantViewModel.onKeyWordChange(it)
+                                },
+                                onSearch = {
+                                    restaurantViewModel.reloadShopList()
+                                },
+                                suggestions = shopNames
+                            )
+                        }
                     },
                     bottomBar = {
-                        BottomNav(
-                            selectedScreen = selectedMarkerType
+                        AnimatedVisibility(
+                            visible = currentRoute == Map.route || currentRoute == List.route
+                                    || currentRoute == Favorites.route
                         ) {
-                            selectedMarkerType = it
+                            BottomNav(
+                                nav = navController,
+                            )
                         }
                     }
                 ) { innerPadding ->
-                    when (selectedMarkerType) {
-                        MarkerType.List -> {
-                            HomeScreen(
-                                Modifier.padding(
-                                    top = innerPadding.calculateTopPadding(),
-                                    bottom = innerPadding.calculateBottomPadding()
-                                ),
-                                fusedLocationClient,
-                                MarkerType.List,
-                                restaurantViewModel,
-                            )
-                        }
-
-                        MarkerType.Map -> {
-                            HomeScreen(
-                                Modifier.padding(
-                                    top = innerPadding.calculateTopPadding(),
-                                    bottom = innerPadding.calculateBottomPadding()
-                                ),
-                                fusedLocationClient,
-                                MarkerType.Map,
-                                restaurantViewModel,
-                            )
-                        }
-
-                        MarkerType.SaveList -> {}
-                    }
+                    AppNavGraph(
+                        navController = navController,
+                        innerPadding = innerPadding,
+                        restaurantViewModel = restaurantViewModel,
+                        fusedLocationClient = fusedLocationClient,
+                    )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun AppNavGraph(
+    navController: NavHostController,
+    innerPadding: PaddingValues,
+    restaurantViewModel: RestaurantViewModel,
+    fusedLocationClient: FusedLocationProviderClient
+) {
+    val detailViewModel: DetailViewModel = viewModel()
+    NavHost(navController, startDestination = Map.route) {
+        composable(Map.route) {
+            HomeScreen(
+                nav = navController,
+                Modifier.padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
+                ),
+                fusedLocationClient,
+                Map,
+                restaurantViewModel,
+            )
+        }
+        composable(List.route) {
+            HomeScreen(
+                nav = navController,
+                Modifier.padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
+                ),
+                fusedLocationClient,
+                List,
+                restaurantViewModel,
+            )
+        }
+        composable(Favorites.route) {
+
+        }
+        composable(
+            "detail/{id}",
+            enterTransition = {
+                fadeIn(
+                    animationSpec = tween(
+                        300, easing = LinearEasing
+                    )
+                ) + slideIntoContainer(
+                    animationSpec = tween(300, easing = EaseIn),
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start
+                )
+            },
+            exitTransition = {
+                fadeOut(
+                    animationSpec = tween(
+                        300, easing = LinearEasing
+                    )
+                ) + slideOutOfContainer(
+                    animationSpec = tween(300, easing = EaseOut),
+                    towards = AnimatedContentTransitionScope.SlideDirection.End
+                )
+            }
+        ) { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("id") ?: ""
+            DetailView(
+                Modifier.padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
+                ),
+                id = shopId,
+                detailViewModel = detailViewModel,
+                onNavBack = {
+                    navController.popBackStack()
+                })
         }
     }
 }
@@ -201,6 +284,13 @@ fun LocationHandler(
     }
 }
 
+data class TopLevelRoute<T : Any>(
+    val name: String,
+    val route: T,
+    val selectedIcon: ImageVector,
+    val unSelectedIcon: ImageVector
+)
+
 // request location
 fun getLastLocation(
     fusedLocationClient: FusedLocationProviderClient,
@@ -226,15 +316,14 @@ fun getLastLocation(
 
 @Composable
 fun HomeScreen(
+    nav: NavHostController,
     modifier: Modifier,
     fusedLocationClient: FusedLocationProviderClient,
-    markerType: MarkerType,
+    markerType: Route,
     restaurantViewModel: RestaurantViewModel,
 ) {
     val state by restaurantViewModel.restaurantViewState.collectAsState()
-
     val distanceRange by restaurantViewModel.distanceRange.collectAsState()
-
     val searchFilters by restaurantViewModel.searchFilters.collectAsState()
 
     when (state) {
@@ -255,12 +344,18 @@ fun HomeScreen(
                     selectedDistance = distanceRange,
                     state = searchFilters
                 )
-                if (markerType == MarkerType.List) {
+                if (markerType == List) {
                     RestaurantList(
                         shops = (state as RestaurantViewState.Success).shopList,
+                        onNavDetail = {
+                            nav.navigate(route = Detail(id = it).route)
+                        }
                     )
-                } else if (markerType == MarkerType.Map) {
-                    MapView(state as RestaurantViewState.Success)
+                } else if (markerType == Map) {
+                    MapView(viewState = state as RestaurantViewState.Success,
+                        onNavDetail = {
+                            nav.navigate(route = Detail(id = it).route)
+                        })
                 }
             }
         }
