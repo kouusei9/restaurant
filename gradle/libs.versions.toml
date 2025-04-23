@@ -20,7 +20,7 @@ ksp = "2.0.0-1.0.23"
 
 coil = "2.4.0"
 
-gmsLocation = "21.0.1"
+gmsLocation = "21.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

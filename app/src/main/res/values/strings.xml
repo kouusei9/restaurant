@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">restaurant</string>
+
+    <string name="map">地図</string>
+    <string name="list">リスト</string>
+    <string name="save_list">保存リスト</string>
 </resources>
