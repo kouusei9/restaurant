@@ -4,4 +4,6 @@
     <string name="map">地図</string>
     <string name="list">リスト</string>
     <string name="save_list">保存リスト</string>
+
+    <string name="total_count">%d件</string>
 </resources>

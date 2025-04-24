@@ -8,7 +8,8 @@ sealed class RestaurantViewState {
     data object Loading : RestaurantViewState()
     data class Success(
         val shopList: List<ShopSummary>,
-        val boundingBox: LatLngBounds
+        val boundingBox: LatLngBounds,
+        val totalSize: Int
     ) : RestaurantViewState()
 
     data class Error(val message: String) : RestaurantViewState()

@@ -76,11 +76,11 @@ class MainActivity : ComponentActivity() {
             RestaurantTheme {
                 var restaurantViewModel: RestaurantViewModel = viewModel()
                 val shopNames by restaurantViewModel.shopNames.collectAsState()
-
                 // TODO save history keyword
                 val keyword by restaurantViewModel.keyword.collectAsState()
-                val debounceQuery = remember { mutableStateOf("") }
 
+                // request by name when keyword change
+                val debounceQuery = remember { mutableStateOf("") }
                 LaunchedEffect(keyword) {
                     delay(500) // wait 500 after keyword change
                     if (keyword != debounceQuery.value) {
@@ -95,10 +95,7 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(navBackStackEntry) {
                     currentRoute = navBackStackEntry?.destination?.route
-                    Log.d(
-                        TAG,
-                        "onCreate: $currentRoute, Map route:${Map.route} List route:${List.route}"
-                    )
+                    Log.d(TAG, "onCreate: $currentRoute, Map route:${Map.route} List route:${List.route}")
                 }
 
                 Scaffold(
@@ -108,12 +105,12 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         AnimatedVisibility(visible = currentRoute == Map.route || currentRoute == List.route) {
                             RestaurantTopBar(
-                                keyword,
+                                keyword = keyword,
                                 onKeywordChange = {
                                     restaurantViewModel.onKeyWordChange(it)
                                 },
                                 onSearch = {
-                                    restaurantViewModel.reloadShopList()
+                                    restaurantViewModel.searchShopsByName()
                                 },
                                 suggestions = shopNames
                             )
@@ -135,6 +132,7 @@ class MainActivity : ComponentActivity() {
                         innerPadding = innerPadding,
                         restaurantViewModel = restaurantViewModel,
                         fusedLocationClient = fusedLocationClient,
+                        keyword = keyword
                     )
                 }
             }
@@ -147,7 +145,8 @@ fun AppNavGraph(
     navController: NavHostController,
     innerPadding: PaddingValues,
     restaurantViewModel: RestaurantViewModel,
-    fusedLocationClient: FusedLocationProviderClient
+    fusedLocationClient: FusedLocationProviderClient,
+    keyword: String
 ) {
     val detailViewModel: DetailViewModel = viewModel()
     NavHost(navController, startDestination = Map.route) {
@@ -161,6 +160,7 @@ fun AppNavGraph(
                 fusedLocationClient,
                 Map,
                 restaurantViewModel,
+                keyword = keyword
             )
         }
         composable(List.route) {
@@ -173,6 +173,7 @@ fun AppNavGraph(
                 fusedLocationClient,
                 List,
                 restaurantViewModel,
+                keyword = keyword
             )
         }
         composable(Favorites.route) {
@@ -321,10 +322,13 @@ fun HomeScreen(
     fusedLocationClient: FusedLocationProviderClient,
     markerType: Route,
     restaurantViewModel: RestaurantViewModel,
+    keyword: String
 ) {
     val state by restaurantViewModel.restaurantViewState.collectAsState()
     val distanceRange by restaurantViewModel.distanceRange.collectAsState()
     val searchFilters by restaurantViewModel.searchFilters.collectAsState()
+    val isLoading by restaurantViewModel.isLoading.collectAsState()
+    val isReachEnd by restaurantViewModel.isReachEnd.collectAsState()
 
     when (state) {
         is RestaurantViewState.Error -> {
@@ -336,20 +340,26 @@ fun HomeScreen(
             Column(modifier = modifier) {
                 FilterView(
                     onDistanceChange = {
-                        restaurantViewModel.distanceRangeChange(it)
+                        restaurantViewModel.onDistanceRangeChange(it)
                     },
                     onFilterChange = {
                         restaurantViewModel.toggleFilter(it)
                     },
                     selectedDistance = distanceRange,
-                    state = searchFilters
+                    state = searchFilters,
+                    keyword = keyword
                 )
                 if (markerType == List) {
                     RestaurantList(
-                        shops = (state as RestaurantViewState.Success).shopList,
+                        restaurantViewState = state as RestaurantViewState.Success,
                         onNavDetail = {
                             nav.navigate(route = Detail(id = it).route)
-                        }
+                        },
+                        onLoadMore = {
+                            restaurantViewModel.loadMore()
+                        },
+                        isLoadingMore = isLoading,
+                        isReachEnd = isReachEnd
                     )
                 } else if (markerType == Map) {
                     MapView(viewState = state as RestaurantViewState.Success,

@@ -1,5 +1,6 @@
 package com.kouusei.restaurant.presentation.listview
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,39 +18,88 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.kouusei.restaurant.R
+import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun RestaurantList(
-    shops: List<ShopSummary>,
+    restaurantViewState: RestaurantViewState.Success,
     modifier: Modifier = Modifier,
+    isLoadingMore: Boolean,
+    isReachEnd: Boolean,
+    onLoadMore: () -> Unit,
     onNavDetail: (id: String) -> Unit
 ) {
+    val TAG = "ListView"
+    Log.d(TAG, "RestaurantList: Enter, isLoadingMore: $isLoadingMore, isReachEnd: $isReachEnd")
+    val listState = rememberLazyListState()
+    val shops = restaurantViewState.shopList
+
+    var shouldLoadMore = remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+            .map { visibleItems ->
+                // only take the last visible item index
+                // and total items count for the collection
+                val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: -1
+                val totalItems = listState.layoutInfo.totalItemsCount
+                Pair(lastVisibleItemIndex, totalItems)
+            }
+            .collect { (lastVisibleItemIndex, totalItems) ->
+                if (lastVisibleItemIndex >= totalItems - 1 && !isLoadingMore && !isReachEnd) {
+                    // load more trending news user reached at the bottom of the list
+                    onLoadMore()
+                }
+            }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore.value) {
+            onLoadMore()
+        }
+    }
+
     LazyColumn(
+        state = listState,
         modifier = modifier
             .fillMaxSize()
             .padding(10.dp)
-            .background(Color(0xFFFFFFFC))
+            .background(MaterialTheme.colorScheme.background)
     ) {
+        if (shops.isNotEmpty()) {
+            item() {
+                Text(
+                    text = stringResource(R.string.total_count, restaurantViewState.totalSize),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
         items(shops, key = { it.id }) {
             RestaurantItemBar(it, onNavDetail)
         }
@@ -122,7 +172,6 @@ fun RestaurantItemBar(
                         fontSize = 10.sp
                     )
                 }
-
             }
         }
     }
@@ -142,25 +191,32 @@ fun debugPlaceholder(@DrawableRes debugPreview: Int) =
 fun RestaurantListPreview() {
     RestaurantTheme {
         RestaurantList(
-            listOf(
-                ShopSummary(
-                    id = "1",
-                    name = "遊楽旬彩 直",
-                    url = "https://imgfp.hotp.jp/IMGH/75/56/P027077556/P027077556_100.jpg",
-                    budget = "5001～7000円",
-                    access = "近鉄大阪上本町駅6出口より徒歩約9分",
-                    location = LatLng(1.0, 1.0)
+            restaurantViewState = RestaurantViewState.Success(
+                shopList = listOf(
+                    ShopSummary(
+                        id = "1",
+                        name = "遊楽旬彩 直",
+                        url = "https://imgfp.hotp.jp/IMGH/75/56/P027077556/P027077556_100.jpg",
+                        budget = "5001～7000円",
+                        access = "近鉄大阪上本町駅6出口より徒歩約9分",
+                        location = LatLng(1.0, 1.0)
+                    ),
+                    ShopSummary(
+                        id = "2",
+                        name = "遊楽旬彩 直222",
+                        url = "https://imgfp.hotp.jp/IMGH/75/56/P027077556/P027077556_100.jpg",
+                        budget = "5001～7000円",
+                        access = "近鉄大阪上本町駅6出dddddddddd口より徒歩約9分",
+                        location = LatLng(1.0, 1.0)
+                    )
                 ),
-                ShopSummary(
-                    id = "2",
-                    name = "遊楽旬dddddddddddddddddd彩 直222",
-                    url = "https://imgfp.hotp.jp/IMGH/75/56/P027077556/P027077556_100.jpg",
-                    budget = "5001～7000円",
-                    access = "近鉄大阪上本町駅6出dddddddddd口より徒歩約9分",
-                    location = LatLng(1.0, 1.0)
-                )
+                boundingBox = LatLngBounds(LatLng(1.0, 1.0), LatLng(1.0, 1.0)),
+                totalSize = 10,
             ),
-            onNavDetail = {}
+            onNavDetail = {},
+            onLoadMore = {},
+            isLoadingMore = false,
+            isReachEnd = false
         )
     }
 }
