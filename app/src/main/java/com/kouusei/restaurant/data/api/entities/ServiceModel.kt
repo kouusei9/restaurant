@@ -25,7 +25,7 @@ data class Shop(
     val close: String,
     val lat: Double,
     val lng: Double,
-    val capacity: Int,
+    val capacity: String,
 )
 
 data class Genre(
