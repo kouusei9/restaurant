@@ -1,5 +1,6 @@
 package com.kouusei.restaurant.data.api
 
+import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.api.entities.ShopName
 import com.kouusei.restaurant.data.utils.ApiResult
@@ -8,50 +9,14 @@ import javax.inject.Inject
 class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService: HotPepperGourmetService) :
     HotPepperGourmetRepository {
 
-    override suspend fun searchShopsByLocation(
-        lat: Double,
-        lng: Double,
-        range: Int,
-        filters: Map<String, String>
-    ): ApiResult<List<Shop>> {
-        return try {
-            val response =
-                apiService.gourmetSearch(lat = lat, lng = lng, range = range, filters = filters)
-            if (response.results.error != null) {
-                ApiResult.Error(response.results.error.message)
-            } else {
-                ApiResult.Success(response.results.shop)
-            }
-        } catch (e: Exception) {
-            ApiResult.Error(e.message ?: "Unknown error")
-        }
-    }
-
-    override suspend fun searchShopsByKeyword(
-        keyword: String,
-        filters: Map<String, String>
-    ): ApiResult<List<Shop>> {
-        if (keyword.isEmpty())
-            return ApiResult.Success(emptyList())
-        return try {
-            val response = apiService.gourmetSearch(keyword = keyword, filters = filters)
-            if (response.results.error != null) {
-                ApiResult.Error(response.results.error.message)
-            } else {
-                ApiResult.Success(response.results.shop)
-            }
-        } catch (e: Exception) {
-            ApiResult.Error(e.message ?: "Unknown error")
-        }
-    }
-
     override suspend fun searchShops(
         keyword: String?,
         lat: Double?,
         lng: Double?,
         range: Int?,
+        start: Int,
         filters: Map<String, String>
-    ): ApiResult<List<Shop>> {
+    ): ApiResult<Results> {
         return try {
             val response =
                 apiService.gourmetSearch(
@@ -59,12 +24,13 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                     lat = lat,
                     lng = lng,
                     range = range,
-                    filters = filters
+                    filters = filters,
+                    start = start
                 )
             if (response.results.error != null) {
                 ApiResult.Error(response.results.error.message)
             } else {
-                ApiResult.Success(response.results.shop)
+                ApiResult.Success(response.results)
             }
         } catch (e: Exception) {
             ApiResult.Error(e.message ?: "Unknown error")

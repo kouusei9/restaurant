@@ -52,7 +52,8 @@ fun FilterView(
     onDistanceChange: (DistanceRange) -> Unit,
     onFilterChange: (Filter) -> Unit,
     selectedDistance: DistanceRange,
-    state: SearchFilters
+    state: SearchFilters,
+    keyword: String
 ) {
     // 控制距离下拉菜单
     var distanceMenuExpanded by remember { mutableStateOf(false) }
@@ -76,7 +77,9 @@ fun FilterView(
                     onDismissRequest = { distanceMenuExpanded = false }
                 ) {
                     distanceOptions.forEach { option ->
-                        if (option == DistanceRange.RANGE_NO) {
+                        if (option == DistanceRange.RANGE_NO && keyword.isEmpty()) {
+                            // show nothing
+                        } else if (option == DistanceRange.RANGE_NO) {
                             DropdownMenuItem(
                                 text = { Text("クリア") },
                                 leadingIcon = {
