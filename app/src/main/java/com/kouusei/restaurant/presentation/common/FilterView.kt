@@ -40,6 +40,17 @@ enum class DistanceRange(val value: Int, val description: String) {
     }
 }
 
+enum class OrderMethod(val value: Int, val description: String) {
+    Order_Recommend(4, "おすすめ"),
+    Order_Distance(0, "距離");
+
+    companion object {
+        fun fromDes(des: String): OrderMethod? {
+            return OrderMethod.entries.find { it.description == des }
+        }
+    }
+}
+
 enum class Filter(val value: String, val description: String) {
     Filter_FreeDrink("free_drink", "飲み放題"),
     Filter_FreeFood("free_food", "食べ放題"),
@@ -50,16 +61,13 @@ enum class Filter(val value: String, val description: String) {
 fun FilterView(
     filterList: List<Filter> = Filter.entries,
     onDistanceChange: (DistanceRange) -> Unit,
+    selectedOrderMethod: OrderMethod,
+    onOrderMethodChange: (OrderMethod) -> Unit,
     onFilterChange: (Filter) -> Unit,
     selectedDistance: DistanceRange,
     state: SearchFilters,
     keyword: String
 ) {
-    // 控制距离下拉菜单
-    var distanceMenuExpanded by remember { mutableStateOf(false) }
-    val distanceOptions = DistanceRange.entries
-//    var selectedDistance by remember { mutableStateOf<DistanceRange>(DistanceRange.RANGE_1000M) }
-
     LazyRow(
         modifier = Modifier
             .padding(start = 8.dp, end = 8.dp)
@@ -67,44 +75,22 @@ fun FilterView(
     ) {
         item {
             Box {
-                FilterChip(
-                    label = selectedDistance.description,
-                    isSelected = selectedDistance != DistanceRange.RANGE_NO,
-                    onClick = { distanceMenuExpanded = true }
+                DistanceFilterChip(
+                    selectedDistance = selectedDistance,
+                    keyword = keyword,
+                    onDistanceChange = onDistanceChange
                 )
-                DropdownMenu(
-                    expanded = distanceMenuExpanded,
-                    onDismissRequest = { distanceMenuExpanded = false }
+            }
+        }
+        item {
+            Box {
+                FilterChipWithDropdownMenu(
+                    options = OrderMethod.entries.map { it.description },
+                    selected = selectedOrderMethod.description
                 ) {
-                    distanceOptions.forEach { option ->
-                        if (option == DistanceRange.RANGE_NO && keyword.isEmpty()) {
-                            // show nothing
-                        } else if (option == DistanceRange.RANGE_NO) {
-                            DropdownMenuItem(
-                                text = { Text("クリア") },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Clear,
-                                        contentDescription = "Clear"
-                                    )
-                                },
-                                onClick = {
-//                                    selectedDistance = option
-                                    onDistanceChange(option)
-                                    distanceMenuExpanded = false
-                                }
-                            )
-                        } else {
-                            DropdownMenuItem(
-                                text = { Text(option.description) },
-                                onClick = {
-//                                    selectedDistance = option
-                                    onDistanceChange(option)
-                                    distanceMenuExpanded = false
-                                }
-                            )
-                        }
-
+                    val method = OrderMethod.fromDes(it)
+                    method?.let {
+                        onOrderMethodChange(method)
                     }
                 }
             }
@@ -115,6 +101,81 @@ fun FilterView(
                 isSelected = state.getValue(item),
                 onClick = { onFilterChange(item) }
             )
+        }
+    }
+}
+
+@Composable
+fun FilterChipWithDropdownMenu(
+    options: List<String>,
+    selected: String,
+    onSelectedChanged: (String) -> Unit,
+) {
+    var distanceMenuExpanded by remember { mutableStateOf(false) }
+    FilterChip(
+        label = selected,
+        isSelected = true,
+        onClick = { distanceMenuExpanded = true }
+    )
+    DropdownMenu(
+        expanded = distanceMenuExpanded,
+        onDismissRequest = { distanceMenuExpanded = false }
+    ) {
+        options.forEach { option ->
+            DropdownMenuItem(
+                text = { Text(option) },
+                onClick = {
+                    onSelectedChanged(option)
+                    distanceMenuExpanded = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun DistanceFilterChip(
+    selectedDistance: DistanceRange,
+    keyword: String,
+    onDistanceChange: (DistanceRange) -> Unit,
+) {
+    var distanceMenuExpanded by remember { mutableStateOf(false) }
+    val distanceOptions = DistanceRange.entries
+    FilterChip(
+        label = selectedDistance.description,
+        isSelected = selectedDistance != DistanceRange.RANGE_NO,
+        onClick = { distanceMenuExpanded = true }
+    )
+    DropdownMenu(
+        expanded = distanceMenuExpanded,
+        onDismissRequest = { distanceMenuExpanded = false }
+    ) {
+        distanceOptions.forEach { option ->
+            if (option == DistanceRange.RANGE_NO && keyword.isEmpty()) {
+                // show nothing
+            } else if (option == DistanceRange.RANGE_NO) {
+                DropdownMenuItem(
+                    text = { Text("クリア") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear"
+                        )
+                    },
+                    onClick = {
+                        onDistanceChange(option)
+                        distanceMenuExpanded = false
+                    }
+                )
+            } else {
+                DropdownMenuItem(
+                    text = { Text(option.description) },
+                    onClick = {
+                        onDistanceChange(option)
+                        distanceMenuExpanded = false
+                    }
+                )
+            }
         }
     }
 }

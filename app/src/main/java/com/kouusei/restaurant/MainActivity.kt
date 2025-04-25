@@ -422,6 +422,7 @@ fun HomeScreen(
 ) {
     val state by restaurantViewModel.restaurantViewState.collectAsState()
     val distanceRange by restaurantViewModel.distanceRange.collectAsState()
+    val orderMethod by restaurantViewModel.orderMethod.collectAsState()
     val searchFilters by restaurantViewModel.searchFilters.collectAsState()
     val isLoading by restaurantViewModel.isLoading.collectAsState()
     val isReachEnd by restaurantViewModel.isReachEnd.collectAsState()
@@ -438,10 +439,14 @@ fun HomeScreen(
                     onDistanceChange = {
                         restaurantViewModel.onDistanceRangeChange(it)
                     },
+                    onOrderMethodChange = {
+                        restaurantViewModel.onOrderMethodChange(it)
+                    },
                     onFilterChange = {
                         restaurantViewModel.toggleFilter(it)
                     },
                     selectedDistance = distanceRange,
+                    selectedOrderMethod = orderMethod,
                     state = searchFilters,
                     keyword = keyword
                 )

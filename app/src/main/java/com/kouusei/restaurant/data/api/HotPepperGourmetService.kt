@@ -16,7 +16,7 @@ interface HotPepperGourmetService {
         @Query("keyword") keyword: String? = null,
         @Query("range") range: Int? = 3,
         @Query("count") count: Int = 10,
-        @Query("order") order: Int = 4,
+        @Query("order") order: Int? = 4,
         @Query("start") start: Int = 1,
         @Query("id") id: String? = null,
         @QueryMap filters: Map<String, String> = emptyMap<String, String>()

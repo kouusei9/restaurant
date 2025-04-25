@@ -15,6 +15,7 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
         lng: Double?,
         range: Int?,
         start: Int,
+        order: Int?,
         filters: Map<String, String>
     ): ApiResult<Results> {
         return try {
@@ -25,7 +26,8 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                     lng = lng,
                     range = range,
                     filters = filters,
-                    start = start
+                    start = start,
+                    order = order
                 )
             if (response.results.error != null) {
                 ApiResult.Error(response.results.error.message)

@@ -9,6 +9,7 @@ import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.utils.ApiResult
 import com.kouusei.restaurant.presentation.common.DistanceRange
 import com.kouusei.restaurant.presentation.common.Filter
+import com.kouusei.restaurant.presentation.common.OrderMethod
 import com.kouusei.restaurant.presentation.entities.SearchFilters
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.presentation.mappers.toLatLngBounds
@@ -41,6 +42,9 @@ class RestaurantViewModel @Inject constructor(
     private val _distanceRange = MutableStateFlow<DistanceRange>(DistanceRange.RANGE_1000M)
     val distanceRange: StateFlow<DistanceRange> = _distanceRange.asStateFlow()
 
+    private val _orderMethod = MutableStateFlow<OrderMethod>(OrderMethod.Order_Distance)
+    val orderMethod: StateFlow<OrderMethod> = _orderMethod.asStateFlow()
+
     private val _keyword = MutableStateFlow<String>("")
     val keyword: StateFlow<String> = _keyword.asStateFlow()
 
@@ -62,6 +66,11 @@ class RestaurantViewModel @Inject constructor(
 
     fun onKeyWordChange(keyword: String) {
         _keyword.value = keyword
+    }
+
+    fun onOrderMethodChange(method: OrderMethod) {
+        _orderMethod.value = method
+        reloadShopList()
     }
 
     fun toggleFilter(filter: Filter) {
@@ -98,12 +107,15 @@ class RestaurantViewModel @Inject constructor(
         _isLoading.value = false
 
         viewModelScope.launch {
+            val order =
+                if (_orderMethod.value == OrderMethod.Order_Distance) null else _orderMethod.value.value
             withContext(Dispatchers.IO) {
                 loadShopListByKeywordAndLocation(
-                    keyword.value,
-                    _location?.latitude,
-                    _location?.longitude,
-                    distanceRange.value
+                    keyword = keyword.value,
+                    lat = _location?.latitude,
+                    lng = _location?.longitude,
+                    range = distanceRange.value,
+                    order = order,
                 ) { result ->
                     refreshShopList(result)
                 }
@@ -212,6 +224,7 @@ class RestaurantViewModel @Inject constructor(
         lng: Double?,
         range: DistanceRange,
         start: Int = 1,
+        order: Int?,
         onResult: (ApiResult<Results>) -> Unit
     ) {
         withContext(Dispatchers.IO) {
@@ -219,11 +232,12 @@ class RestaurantViewModel @Inject constructor(
                 onResult(
                     gourmetRepository.searchShops(
                         keyword = keyword,
-                        lat = null,
-                        lng = null,
+                        lat = lat,
+                        lng = lng,
                         range = null,
                         filters = searchFilters.value.toQueryMap(),
-                        start = start
+                        start = start,
+                        order = order
                     )
                 )
             } else if (range == DistanceRange.RANGE_NO) {
@@ -235,7 +249,8 @@ class RestaurantViewModel @Inject constructor(
                         lng = lng,
                         range = range.value,
                         filters = searchFilters.value.toQueryMap(),
-                        start = start
+                        start = start,
+                        order = order
                     )
                 )
             } else {
@@ -246,7 +261,8 @@ class RestaurantViewModel @Inject constructor(
                         lng = lng,
                         range = range.value,
                         filters = searchFilters.value.toQueryMap(),
-                        start = start
+                        start = start,
+                        order = order
                     )
                 )
             }
@@ -266,15 +282,18 @@ class RestaurantViewModel @Inject constructor(
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
+                val order =
+                    if (_orderMethod.value == OrderMethod.Order_Distance) null else _orderMethod.value.value
                 val start =
                     if (restaurantViewState.value is RestaurantViewState.Success)
                         (restaurantViewState.value as RestaurantViewState.Success).shopList.size + 1 else 1
                 loadShopListByKeywordAndLocation(
-                    keyword.value,
-                    _location?.latitude,
-                    _location?.longitude,
-                    distanceRange.value,
-                    start = start
+                    keyword = keyword.value,
+                    lat = _location?.latitude,
+                    lng = _location?.longitude,
+                    range = distanceRange.value,
+                    start = start,
+                    order = order
                 ) {
                     _isLoading.value = false
                     appendShopList(it)
