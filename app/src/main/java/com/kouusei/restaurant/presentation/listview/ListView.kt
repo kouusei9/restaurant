@@ -45,6 +45,9 @@ import com.kouusei.restaurant.R
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 @Composable
@@ -70,9 +73,20 @@ fun RestaurantList(
                 val totalItems = listState.layoutInfo.totalItemsCount
                 Pair(lastVisibleItemIndex, totalItems)
             }
+            // only tack changed one
+            .distinctUntilChanged()
+            // add wait time
+            .debounce(300)
+            //
+            .conflate()
             .collect { (lastVisibleItemIndex, totalItems) ->
+                Log.d(TAG, "RestaurantList: $isLoadingMore, $isReachEnd")
                 if (lastVisibleItemIndex >= totalItems - 1 && !isLoadingMore && !isReachEnd) {
                     // load more trending news user reached at the bottom of the list
+                    Log.d(
+                        TAG,
+                        "RestaurantList: total items: $totalItems, lastvisible item index:$lastVisibleItemIndex"
+                    )
                     onLoadMore()
                 }
             }
@@ -100,8 +114,11 @@ fun RestaurantList(
                 onNavDetail = onNavDetail
             )
         }
-        if (isLoadingMore) {
-            item {
+
+        item {
+            if (isReachEnd) {
+                Text(text = "最後")
+            } else {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .fillMaxWidth()
