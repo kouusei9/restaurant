@@ -3,6 +3,7 @@ package com.kouusei.restaurant
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -17,6 +18,8 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,7 +53,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
 import com.kouusei.restaurant.presentation.DetailViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewModel
@@ -66,7 +74,6 @@ val TAG = "MainActivity"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    val TAG = "MainActivity"
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,7 +108,10 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(navBackStackEntry) {
                     currentRoute = navBackStackEntry?.destination?.route
-                    Log.d(TAG, "onCreate: $currentRoute, Map route:${Map.route} List route:${List.route}")
+                    Log.d(
+                        TAG,
+                        "onCreate: $currentRoute, Map route:${Map.route} List route:${List.route}"
+                    )
                 }
 
                 val topRoutes = listOf(Map.route, List.route, Favorites.route)
@@ -122,11 +132,30 @@ class MainActivity : ComponentActivity() {
                                 suggestions = shopNames
                             )
                         }
-                    },
-                    bottomBar = {
                         AnimatedVisibility(
-                            visible = currentRoute == Map.route || currentRoute == List.route
-                                    || currentRoute == Favorites.route
+                            visible = currentRoute !in topRoutes,
+                            enter =
+                            fadeIn(
+                                animationSpec = tween(
+                                    300, easing = LinearEasing
+                                )
+                            ) + slideIn(
+                                animationSpec = tween(300, easing = EaseIn),
+                                initialOffset = { fullSize ->
+                                    IntOffset(fullSize.width, 0)
+                                }
+                            ),
+                            exit =
+                            fadeOut(
+                                animationSpec = tween(
+                                    300, easing = LinearEasing
+                                )
+                            ) + slideOut(
+                                animationSpec = tween(300, easing = EaseOut),
+                                targetOffset = { fullSize ->
+                                    IntOffset(fullSize.width, 0)
+                                }
+                            )
                         ) {
                             DetailTopBar(
                                 title = title,
@@ -160,7 +189,8 @@ class MainActivity : ComponentActivity() {
                         innerPadding = innerPadding,
                         restaurantViewModel = restaurantViewModel,
                         fusedLocationClient = fusedLocationClient,
-                        keyword = keyword
+                        keyword = keyword,
+                        detailViewModel = detailViewModel
                     )
                 }
             }
@@ -174,9 +204,9 @@ fun AppNavGraph(
     innerPadding: PaddingValues,
     restaurantViewModel: RestaurantViewModel,
     fusedLocationClient: FusedLocationProviderClient,
-    keyword: String
+    keyword: String,
+    detailViewModel: DetailViewModel
 ) {
-    val detailViewModel: DetailViewModel = viewModel()
     NavHost(navController, startDestination = Map.route) {
         composable(Map.route) {
             HomeScreen(
@@ -286,6 +316,44 @@ fun LocationHandler(
                 fusedLocationClient,
                 onSuccess = onSuccess, onFailed = onFailed
             )
+        }
+    }
+
+    // 注册 Location Callback
+    val locationCallback = remember {
+        object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                val location = result.lastLocation
+                if (location != null) {
+                    locationText = "Lat: ${location.latitude}, Lon: ${location.longitude}"
+                    onSuccess(LatLng(location.latitude, location.longitude))
+                } else {
+                    onFailed("Location not found")
+                }
+            }
+        }
+    }
+
+    // 启动/停止监听
+    DisposableEffect(hasPermission) {
+        if (hasPermission) {
+            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000L)
+                .setMinUpdateIntervalMillis(2000L)
+                .build()
+
+            try {
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+                )
+            } catch (e: SecurityException) {
+                onFailed("Permission not granted")
+            }
+        }
+
+        onDispose {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
         }
     }
 
