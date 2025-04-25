@@ -101,24 +101,29 @@ fun RestaurantList(
             }
         }
         items(shops, key = { it.id }) {
-            RestaurantItemBar(it, onNavDetail)
+            RestaurantItemBar(
+                modifier = Modifier.fillMaxWidth(),
+                shop = it,
+                onNavDetail = onNavDetail
+            )
         }
     }
 }
 
 @Composable
 fun RestaurantItemBar(
+    modifier: Modifier = Modifier,
     shop: ShopSummary,
     onNavDetail: (id: String) -> Unit
 ) {
     // TODO move color to theme
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+//            .fillMaxWidth()
             .padding(top = 4.dp, bottom = 4.dp)
             .height(120.dp)
             .shadow(
-                elevation = 10.dp,
+                elevation = 12.dp,
                 // 0xffFD7357
                 ambientColor = MaterialTheme.colorScheme.primary,
                 spotColor = MaterialTheme.colorScheme.primary
