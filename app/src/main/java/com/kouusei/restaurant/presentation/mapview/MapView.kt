@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -69,6 +70,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+val TAG = "MapView"
+
 @Composable
 fun MapView(
     viewState: RestaurantViewState.Success,
@@ -84,7 +87,7 @@ fun MapView(
         zoomAll(scope, cameraPositionState, viewState.boundingBox)
     }
 
-    var selectedShop = remember { mutableStateOf(viewState.shopList.firstOrNull()) }
+    val selectedShop = remember { mutableStateOf(viewState.shopList.firstOrNull()) }
 
     LaunchedEffect(selectedShop.value) {
         selectedShop.value?.let { shop ->
@@ -157,7 +160,6 @@ fun FloatingPositionButton(
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
 
-        // 浮动按钮
         FloatingActionButton(
             onClick = {
                 coroutineScope.launch {
@@ -184,9 +186,8 @@ fun FloatingPositionButton(
                             )
                         }
                     } else {
-                        Toast.makeText(context, "需要定位权限才能获取当前位置", Toast.LENGTH_SHORT)
+                        Toast.makeText(context, "No Permission", Toast.LENGTH_SHORT)
                             .show()
-                        // 可引导用户打开设置页
                     }
                 }
             },
@@ -223,30 +224,34 @@ fun FloatList(
     onSelectedShopChange: (ShopSummary) -> Unit,
     onNavDetail: (id: String) -> Unit
 ) {
-    val itemCount = shops.size
-    val initialIndex = 0
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
-    // 当前选中的索引
-    val currentIndex by remember {
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = 0)
+
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val padding = screenWidth * 0.05f
+    val itemWidth = screenWidth * 0.9f
+
+    val density = LocalDensity.current
+    val screenCenter by remember {
         derivedStateOf {
-            listState.firstVisibleItemIndex
+            with(density) { screenWidth.toPx() } / 2
         }
     }
 
-    LaunchedEffect(currentIndex) {
-        currentIndex.let { index ->
-            val selectedShop = shops.getOrNull(index)
-            selectedShop?.let {
-                onSelectedShopChange(selectedShop)
-            }
+    val currentIndex by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            layoutInfo.visibleItemsInfo.minByOrNull { item ->
+                val center = item.offset + item.size / 2
+                kotlin.math.abs(center - screenCenter)
+            }?.index ?: 0
         }
     }
 
     LaunchedEffect(selectedShop) {
         if (selectedShop != null) {
             val index = shops.indexOf(selectedShop)
-            if (index > 0) {
-                listState.scrollToItem(initialIndex + index)
+            if (index >= 0) {
+                listState.scrollToItem(index)
             }
         }
     }
@@ -255,9 +260,6 @@ fun FloatList(
     val snappingLayout = remember { SnapLayoutInfoProvider(listState) }
     val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
 
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val padding = screenWidth * 0.05f
-    val itemWidth = screenWidth * 0.9f
 
     var isBarVisible by remember { mutableStateOf(true) }
     AnimatedVisibility(
@@ -288,41 +290,23 @@ fun FloatList(
                 userScrollEnabled = true
             ) {
                 itemsIndexed(shops) { index, shop ->
-                    val itemIndex = index % itemCount
-//                    Spacer(modifier = Modifier.width((configuration.screenWidthDp * 0.1).dp))
                     RestaurantItemBar(
                         modifier = Modifier
                             .width(itemWidth),
                         shop = shop,
-//                        onClick = {
-//                            selectedShop.value = shop
-//                            // 滚动到该项可视区域（可选）
-//                            val index = viewState.shopList.indexOf(shop)
-//                            scope.launch {
-//                                listState.animateScrollToItem(index)
-//                            }
-//                        },
                         onNavDetail = onNavDetail
                     )
-//                    Spacer(modifier = Modifier.width((configuration.screenWidthDp * 0.1).dp))
                 }
             }
 
-            // 自动滚动到中间位置当接近边界时
-            LaunchedEffect(listState.firstVisibleItemIndex) {
-                val firstVisible = listState.firstVisibleItemIndex
-                if (firstVisible <= 0) {
-                    return@LaunchedEffect
-                }
-                when {
-                    firstVisible < itemCount -> {
-                        // 接近左边界，滚动到中间段
-                        listState.animateScrollToItem(initialIndex + (firstVisible % itemCount))
-                    }
-
-                    firstVisible >= itemCount * 2 -> {
-                        // 接近右边界，滚动到中间段
-                        listState.animateScrollToItem(initialIndex + (firstVisible % itemCount))
+            val scope = rememberCoroutineScope()
+            LaunchedEffect(currentIndex) {
+                if (currentIndex >= 0) {
+                    Log.d(TAG, "FloatList: $currentIndex")
+                    onSelectedShopChange(shops[currentIndex])
+                    // in case of block code below.
+                    scope.launch {
+                        listState.animateScrollToItem(currentIndex)
                     }
                 }
             }
