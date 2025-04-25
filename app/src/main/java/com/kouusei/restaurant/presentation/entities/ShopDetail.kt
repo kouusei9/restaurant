@@ -17,17 +17,18 @@ class ShopDetail(
     val course: Boolean,
     val freeDrink: Boolean,
     val freeFood: Boolean,
-    val smoking: Boolean,
     val card: Boolean,
     val show: Boolean,
     val lunch: Boolean,
     val english: Boolean,
     val pet: Boolean,
+    val nonSmoking: String,
     val wifi: String,
     val child: String,
     val midNight: String,
     val barrierFree: String,
     val parking: String,
-    val privateRoom: String
+    val privateRoom: String,
+    val horigotatsu: String
 ) {
 }

@@ -9,7 +9,7 @@ fun Shop.toShopDetail(): ShopDetail {
         id = id,
         name = name,
         url = photo.mobile.s,
-        budget = budget.name,
+        budget = if (budget.name.isNotEmpty()) budget.name else budget.average,
         access = mobile_access,
         location = LatLng(lat, lng),
         logoUrl = logo_image,
@@ -20,7 +20,7 @@ fun Shop.toShopDetail(): ShopDetail {
         course = checkIsOk(course),
         freeDrink = checkIsOk(free_drink),
         freeFood = checkIsOk(free_food),
-        smoking = checkIsOk(non_smoking),
+        nonSmoking = non_smoking ?: "未確認",
         card = checkIsOk(card),
         show = checkIsOk(show),
         lunch = checkIsOk(lunch),
@@ -32,6 +32,7 @@ fun Shop.toShopDetail(): ShopDetail {
         barrierFree = barrier_free ?: "未確認",
         parking = parking ?: "未確認",
         privateRoom = private_room ?: "未確認",
+        horigotatsu = horigotatsu ?: "未確認"
     )
 }
 

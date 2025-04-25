@@ -1,17 +1,23 @@
 package com.kouusei.restaurant.presentation.detailview
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,8 +31,9 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -115,51 +122,198 @@ fun ShopDetailView(
         }
 
         CustomColumn {
-            CustomText(text = shopDetail.budget)
+            CustomTitle(text = "¥ ${shopDetail.budget}", modifier = Modifier.padding(start = 8.dp))
+            Row {
+                CustomRowWithIcon(
+                    text = "カード支払い",
+                    isCheck = shopDetail.card
+                )
+            }
         }
 
         CustomColumn {
-            CustomText(text = "営業時間：")
+            CustomTitle(text = "営業時間：")
+            CustomText(text = shopDetail.openTime)
+            CustomDivider()
+            CustomTitle(text = "閉店時間：")
+            CustomText(text = shopDetail.closeTime)
+        }
+        CustomColumn {
+            CustomTitle(text = "メニュー")
+            CustomDivider()
 
-            CustomText(
-                text = shopDetail.openTime,
-                fontSize = 10.sp,
-                modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 8.dp)
+            Row {
+                CustomRowWithIcon(
+                    text = "コース",
+                    isCheck = shopDetail.course,
+                    modifier = Modifier.weight(1f)
+                )
+
+                CustomRowWithIcon(
+                    text = "食べ放題",
+                    isCheck = shopDetail.freeFood,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row {
+                CustomRowWithIcon(
+                    text = "飲み放題",
+                    isCheck = shopDetail.freeDrink,
+                    modifier = Modifier.weight(1f)
+                )
+                CustomRowWithIcon(
+                    text = "Launch",
+                    isCheck = shopDetail.lunch,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row {
+                CustomRowWithIcon(
+                    text = "English",
+                    isCheck = shopDetail.english,
+                    modifier = Modifier.weight(1f)
+                )
+                CustomRowWithIcon(
+                    text = "ペット",
+                    isCheck = shopDetail.pet,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        CustomColumn {
+            CustomTitle(text = "アクセス")
+            CustomDivider()
+            CustomText(text = shopDetail.access)
+        }
+
+        CustomColumn {
+            CustomTitle(text = "席・設備")
+            CustomDivider()
+            CustomRowTwoText(
+                text1 = "個室",
+                text2 = shopDetail.privateRoom
             )
-
-            CustomText(text = "閉店時間：")
-
-            CustomText(
-                text = shopDetail.closeTime,
-                fontSize = 10.sp,
-                modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+            CustomDivider()
+            CustomRowTwoText(
+                text1 = "禁煙",
+                text2 = shopDetail.nonSmoking
+            )
+            CustomDivider()
+            CustomRowTwoText(
+                text1 = "掘りごたつ",
+                text2 = shopDetail.horigotatsu
+            )
+            CustomDivider()
+            CustomRowTwoText(
+                text1 = "駐車場",
+                text2 = shopDetail.parking
+            )
+            CustomDivider()
+            CustomRowTwoText(
+                text1 = "バリアフリ",
+                text2 = shopDetail.barrierFree
+            )
+            CustomDivider()
+            CustomRowTwoText(
+                text1 = "WIFI",
+                text2 = shopDetail.wifi
             )
         }
 
         CustomColumn {
-            CustomText(text = "アクセス:")
-            CustomText(text = shopDetail.access, modifier = Modifier.padding(start = 8.dp))
-        }
-
-        CustomColumn {
-            CustomText(text = "コース:")
-            CustomText(text = "個室:")
-            CustomText(text = shopDetail.privateRoom)
+            CustomTitle(text = "特徴・関連情報")
+            CustomDivider()
+            CustomRowTwoText(
+                text1 = "お子様連れ",
+                text2 = shopDetail.child
+            )
         }
     }
 }
 
 @Composable
-fun CustomText(
+fun CustomDivider() {
+    Spacer(
+        modifier = Modifier
+            .height(1.dp)
+            .fillMaxWidth()
+            .background(color = MaterialTheme.colorScheme.inverseOnSurface),
+    )
+}
+
+@Composable
+fun CustomRowWithIcon(
     text: String,
-    fontSize: TextUnit = TextUnit.Unspecified,
+    isCheck: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+//        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        CustomText(text = text, modifier = Modifier.weight(1f))
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (isCheck) {
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = "have",
+                    modifier = Modifier.size(20.dp),
+                )
+            } else {
+                Icon(
+                    painter = painterResource(R.drawable.cancel_48px),
+                    contentDescription = "not have",
+                    modifier = Modifier
+                        .size(20.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomRowTwoText(
+    text1: String,
+    text2: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        CustomText(text = text1, modifier = Modifier.weight(1f))
+        CustomText(text = text2, modifier = Modifier.weight(3f))
+    }
+}
+
+@Composable
+fun CustomTitle(
+    text: String,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
     modifier: Modifier = Modifier
 ) {
     Text(
         text = text,
         color = MaterialTheme.colorScheme.onSurface,
-        fontSize = fontSize,
-        modifier = modifier
+        modifier = modifier,
+        style = style
+    )
+}
+
+@Composable
+fun CustomText(
+    text: String,
+    style: TextStyle = MaterialTheme.typography.bodyMedium,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier.padding(start = 8.dp),
+        style = style
     )
 }
 
@@ -174,7 +328,8 @@ fun CustomColumn(
             .wrapContentHeight()
             .background(MaterialTheme.colorScheme.surface)
             .shadow(elevation = 1.dp)
-            .padding(8.dp)
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Spacer(modifier = Modifier.height(8.dp))
         content()
@@ -202,7 +357,7 @@ fun ShopDetailViewPreview() {
             course = true,
             freeDrink = true,
             freeFood = false,
-            smoking = true,
+            nonSmoking = "禁煙席なし",
             card = true,
             show = false,
             lunch = false,
@@ -213,7 +368,8 @@ fun ShopDetailViewPreview() {
             midNight = "営業していない",
             barrierFree = "なし ：ご不便な点が御座いましたら、お手伝いいたしますのでお気軽にスタッフまでお声掛けください。",
             parking = "なし ：近隣のコインパーキングをご利用ください。お車の方はお酒はご遠慮いただいております。",
-            privateRoom = "あり ：4～6名、７～11名、20～50名個室シーンによって使い分けできます！座敷席で最大50名様まで座敷貸切OK！"
+            privateRoom = "あり ：4～6名、７～11名、20～50名個室シーンによって使い分けできます！座敷席で最大50名様まで座敷貸切OK！",
+            horigotatsu = "あり ：掘り炬燵式　ゆったりお過ごし頂ける空間をご用意しております♪"
         ),
     )
 }
