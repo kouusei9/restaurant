@@ -264,7 +264,6 @@ fun FloatList(
     val snappingLayout = remember { SnapLayoutInfoProvider(listState) }
     val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
 
-
     var isBarVisible by remember { mutableStateOf(true) }
     AnimatedVisibility(
         modifier = modifier,
@@ -305,7 +304,7 @@ fun FloatList(
 
             val scope = rememberCoroutineScope()
             LaunchedEffect(currentIndex) {
-                if (currentIndex >= 0) {
+                if (currentIndex >= 0 && currentIndex < shops.size) {
                     Log.d(TAG, "FloatList: $currentIndex")
                     onSelectedShopChange(shops[currentIndex])
                     // in case of block code below.
