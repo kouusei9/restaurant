@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -289,7 +289,7 @@ fun FloatList(
                 contentPadding = PaddingValues(horizontal = padding),
                 userScrollEnabled = true
             ) {
-                itemsIndexed(shops) { index, shop ->
+                items(shops, key = { it.id }) { shop ->
                     RestaurantItemBar(
                         modifier = Modifier
                             .width(itemWidth),
