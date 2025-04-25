@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- 外部地图标记 -->
+    <path
+        android:fillColor="#ffffff"
+        android:strokeColor="#000000"
+        android:strokeWidth="16"
+        android:pathData="M256,32c-123.71,0 -224,100.29 -224,224 0,137.84 224,224 224,224s224,-86.16 224,-224c0,-123.71 -100.29,-224 -224,-224z" />
+
+    <!-- 内部白色圆 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#000000"
+        android:strokeWidth="16"
+        android:pathData="M256,112c-79.53,0 -144,64.47 -144,144s64.47,144 144,144 144,-64.47 144,-144 -64.47,-144 -144,-144z" />
+
+    <!-- 叉子 -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M176,184v48c0,5.6 3.1,10.7 8,13.3l16,8v73.7h16v-73.7l16,-8c4.9,-2.6 8,-7.3 8,-13.3v-48h-16v48l-16,8 -16,-8v-48h-16z" />
+
+    <!-- 勺子 -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M320,184c-22.1,0 -40,21.5 -40,48 0,22.7 12.5,41.6 30.4,46.5v72.5h19.2v-72.5c17.9,-4.9 30.4,-23.8 30.4,-46.5 0,-26.5 -17.9,-48 -40,-48z" />
+</vector>

@@ -99,6 +99,7 @@ dependencies {
 
     // location
     implementation(libs.android.gms.play.services.location)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
