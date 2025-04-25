@@ -26,15 +26,18 @@ fun Shop.toShopDetail(): ShopDetail {
         lunch = checkIsOk(lunch),
         english = checkIsOk(english),
         pet = checkIsOk(pet),
-        wifi = wifi,
-        child = child,
-        midNight = midnight,
-        barrierFree = barrier_free,
-        parking = parking,
-        privateRoom = private_room,
+        wifi = wifi ?: "未確認",
+        child = child ?: "未確認",
+        midNight = midnight ?: "未確認",
+        barrierFree = barrier_free ?: "未確認",
+        parking = parking ?: "未確認",
+        privateRoom = private_room ?: "未確認",
     )
 }
 
-fun checkIsOk(string: String): Boolean {
+fun checkIsOk(string: String?): Boolean {
+    if (string == null) {
+        return false
+    }
     return !(string.contains("なし") || string.contains("不可"))
 }
