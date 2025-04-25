@@ -21,9 +21,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.FloatingActionButton
@@ -39,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -121,19 +124,39 @@ fun MapView(
             }
         }
 
-
-        val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
-        val permissionState = ContextCompat.checkSelfPermission(
-            context,
-            android.Manifest.permission.ACCESS_FINE_LOCATION
+        FloatingPositionButton(
+            modifier = Modifier.align(Alignment.BottomEnd),
+            cameraPositionState = cameraPositionState
         )
 
-        if (permissionState == PackageManager.PERMISSION_GRANTED) {
-            // 安全调用定位服务
-        } else {
-            // 可以提示用户开启权限（或跳转设置页）
-        }
+        FloatList(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .align(Alignment.BottomCenter),
+            shops = viewState.shopList,
+            onNavDetail = onNavDetail,
+            selectedShop = selectedShop.value,
+            onSelectedShopChange = {
+                selectedShop.value = it
+            }
+        )
+    }
+}
+
+@Composable
+fun FloatingPositionButton(
+    modifier: Modifier,
+    cameraPositionState: CameraPositionState
+) {
+    Box(
+        modifier = modifier
+            .wrapContentSize()
+            .padding(bottom = 128.dp)
+    ) {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+
         // 浮动按钮
         FloatingActionButton(
             onClick = {
@@ -169,23 +192,11 @@ fun MapView(
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(8.dp)
+                .clip(CircleShape)
         ) {
             Icon(Icons.Default.Place, contentDescription = "Go to my location")
         }
-
-        FloatList(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .align(Alignment.BottomCenter),
-            shops = viewState.shopList,
-            onNavDetail = onNavDetail,
-            selectedShop = selectedShop.value,
-            onSelectedShopChange = {
-                selectedShop.value = it
-            }
-        )
     }
 }
 
