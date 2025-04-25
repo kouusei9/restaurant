@@ -7,10 +7,27 @@ class ShopDetail(
     val name: String,
     val logoUrl: String?,
     val openTime: String,
+    val closeTime: String,
     val url: String,
     val budget: String,
     val access: String,
     val location: LatLng,
-    val catch: String
+    val catch: String,
+    val genre: String,
+    val course: Boolean,
+    val freeDrink: Boolean,
+    val freeFood: Boolean,
+    val smoking: Boolean,
+    val card: Boolean,
+    val show: Boolean,
+    val lunch: Boolean,
+    val english: Boolean,
+    val pet: Boolean,
+    val wifi: String,
+    val child: String,
+    val midNight: String,
+    val barrierFree: String,
+    val parking: String,
+    val privateRoom: String
 ) {
 }

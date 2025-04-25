@@ -62,6 +62,8 @@ import com.kouusei.restaurant.ui.theme.RestaurantTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
+val TAG = "MainActivity"
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     val TAG = "MainActivity"
@@ -75,9 +77,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             RestaurantTheme {
                 var restaurantViewModel: RestaurantViewModel = viewModel()
+                val detailViewModel: DetailViewModel = viewModel()
+
                 val shopNames by restaurantViewModel.shopNames.collectAsState()
                 // TODO save history keyword
                 val keyword by restaurantViewModel.keyword.collectAsState()
+
+                val title by detailViewModel.title.collectAsState()
 
                 // request by name when keyword change
                 val debounceQuery = remember { mutableStateOf("") }
@@ -98,12 +104,13 @@ class MainActivity : ComponentActivity() {
                     Log.d(TAG, "onCreate: $currentRoute, Map route:${Map.route} List route:${List.route}")
                 }
 
+                val topRoutes = listOf(Map.route, List.route, Favorites.route)
                 Scaffold(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background),
                     topBar = {
-                        AnimatedVisibility(visible = currentRoute == Map.route || currentRoute == List.route) {
+                        AnimatedVisibility(visible = currentRoute in topRoutes) {
                             RestaurantTopBar(
                                 keyword = keyword,
                                 onKeywordChange = {
@@ -121,6 +128,27 @@ class MainActivity : ComponentActivity() {
                             visible = currentRoute == Map.route || currentRoute == List.route
                                     || currentRoute == Favorites.route
                         ) {
+                            DetailTopBar(
+                                title = title,
+                                onNavBack = {
+                                    navController.popBackStack()
+                                })
+                        }
+                    },
+                    bottomBar = {
+                        AnimatedVisibility(visible = currentRoute in topRoutes,
+                            enter =
+                            fadeIn(
+                                animationSpec = tween(
+                                    300, easing = LinearEasing
+                                )
+                            ),
+                            exit =
+                            fadeOut(
+                                animationSpec = tween(
+                                    300, easing = LinearEasing
+                                )
+                            )) {
                             BottomNav(
                                 nav = navController,
                             )
@@ -204,7 +232,7 @@ fun AppNavGraph(
         ) { backStackEntry ->
             val shopId = backStackEntry.arguments?.getString("id") ?: ""
             DetailView(
-                Modifier.padding(
+                modifier = Modifier.padding(
                     top = innerPadding.calculateTopPadding(),
                     bottom = innerPadding.calculateBottomPadding()
                 ),

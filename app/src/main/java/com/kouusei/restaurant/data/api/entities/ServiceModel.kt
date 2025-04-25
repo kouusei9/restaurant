@@ -26,6 +26,28 @@ data class Shop(
     val lat: Double,
     val lng: Double,
     val capacity: String,
+    val course: String,
+    val free_drink: String,
+    val free_food: String,
+    val private_room: String,
+    val horigotatsu: String,
+    val tatami: String,
+    val card: String,
+    val non_smoking: String,
+    val charter: String,
+    val parking: String,
+    val barrier_free: String,
+    val show: String,
+    val karaoke: String,
+    val band: String,
+    val tv: String,
+    val lunch: String,
+    val midnight: String,
+    val english: String,
+    val pet: String,
+    val child: String,
+    val wifi: String,
+    val sp: String
 )
 
 data class Genre(

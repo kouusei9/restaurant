@@ -22,6 +22,9 @@ class DetailViewModel @Inject constructor(
     private val _detailViewState = MutableStateFlow<DetailViewState>(DetailViewState.Loading)
     val detailViewState: StateFlow<DetailViewState> = _detailViewState.asStateFlow()
 
+    private val _title = MutableStateFlow<String>("")
+    val title: StateFlow<String> = _title.asStateFlow()
+
     init {
 
     }
@@ -30,12 +33,14 @@ class DetailViewModel @Inject constructor(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val result = hotPepperGourmetRepository.shopDetailById(id)
-                when(result) {
+                when (result) {
                     is ApiResult.Error -> {
                         _detailViewState.value = DetailViewState.Error(result.message)
                     }
+
                     is ApiResult.Success -> {
                         _detailViewState.value = DetailViewState.Success(result.data.toShopDetail())
+                        _title.value = result.data.name
                     }
                 }
             }
