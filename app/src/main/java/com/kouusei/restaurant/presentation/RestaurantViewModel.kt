@@ -30,9 +30,9 @@ class RestaurantViewModel @Inject constructor(
 ) : ViewModel() {
     val TAG = "RestaurantViewModel"
 
-    private val _restaurantViewStateFlow =
+    private val _restaurantViewState =
         MutableStateFlow<RestaurantViewState>(RestaurantViewState.RequestPermission)
-    val restaurantViewState: StateFlow<RestaurantViewState> = _restaurantViewStateFlow.asStateFlow()
+    val restaurantViewState: StateFlow<RestaurantViewState> = _restaurantViewState.asStateFlow()
 
     private val _shopNames = MutableStateFlow<List<String>>(emptyList())
     val shopNames = _shopNames.asStateFlow()
@@ -103,8 +103,10 @@ class RestaurantViewModel @Inject constructor(
 
     fun reloadShopList() {
         // reset is reach end.
+        Log.d(TAG, "reloadShopList: Called reload shop list")
         _isReachEnd.value = false
         _isLoading.value = false
+        _restaurantViewState.value = RestaurantViewState.Loading
 
         viewModelScope.launch {
             val order =
@@ -129,7 +131,7 @@ class RestaurantViewModel @Inject constructor(
     private fun refreshShopList(result: ApiResult<Results>) {
         when (result) {
             is ApiResult.Error -> {
-                _restaurantViewStateFlow.value =
+                _restaurantViewState.value =
                     RestaurantViewState.Error(result.message)
             }
 
@@ -138,7 +140,7 @@ class RestaurantViewModel @Inject constructor(
                 val boundingBox =
                     if (shopList.isEmpty()) listOf<LatLng>(_location!!).toLatLngBounds() else
                         result.data.shop.map { it.toShopSummary().location }.toLatLngBounds()
-                _restaurantViewStateFlow.value =
+                _restaurantViewState.value =
                     RestaurantViewState.Success(
                         shopList = shopList,
                         boundingBox = boundingBox,
@@ -154,7 +156,7 @@ class RestaurantViewModel @Inject constructor(
     private fun appendShopList(result: ApiResult<Results>) {
         when (result) {
             is ApiResult.Error -> {
-                _restaurantViewStateFlow.value =
+                _restaurantViewState.value =
                     RestaurantViewState.Error(result.message)
             }
 
@@ -169,7 +171,7 @@ class RestaurantViewModel @Inject constructor(
                 val boundingBox =
                     if (combinedList.isEmpty()) listOf<LatLng>(_location!!).toLatLngBounds() else
                         combinedList.map { it.location }.toLatLngBounds()
-                _restaurantViewStateFlow.value =
+                _restaurantViewState.value =
                     RestaurantViewState.Success(
                         shopList = combinedList,
                         boundingBox = boundingBox,
@@ -270,6 +272,9 @@ class RestaurantViewModel @Inject constructor(
     }
 
     fun loadMore() {
+        _isLoading.value = true
+        Log.d(TAG, "loadMore: ${isLoading.value}")
+
         if (restaurantViewState.value is RestaurantViewState.Success) {
             val state = restaurantViewState.value as RestaurantViewState.Success
             if (state.shopList.size >= state.totalSize) {
@@ -278,7 +283,6 @@ class RestaurantViewModel @Inject constructor(
                 return
             }
         }
-        _isLoading.value = true
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -295,15 +299,16 @@ class RestaurantViewModel @Inject constructor(
                     start = start,
                     order = order
                 ) {
-                    _isLoading.value = false
                     appendShopList(it)
+                    Log.d(TAG, "loadMore: ${isLoading.value}")
+                    _isLoading.value = false
                 }
             }
         }
     }
 
     fun permissionSuccess(location: LatLng) {
-        _restaurantViewStateFlow.value = RestaurantViewState.Loading
+        _restaurantViewState.value = RestaurantViewState.Loading
         _location = location
         Log.d(TAG, "permissionSuccess: location: $_location")
         viewModelScope.launch {
@@ -312,7 +317,7 @@ class RestaurantViewModel @Inject constructor(
     }
 
     fun errMessage(message: String) {
-        _restaurantViewStateFlow.value = RestaurantViewState.Error(message)
+        _restaurantViewState.value = RestaurantViewState.Error(message)
     }
 }
 
