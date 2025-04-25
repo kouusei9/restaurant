@@ -89,6 +89,10 @@ fun MapView(
 
     val selectedShop = remember { mutableStateOf(viewState.shopList.firstOrNull()) }
 
+    LaunchedEffect(viewState.shopList) {
+        selectedShop.value = viewState.shopList.firstOrNull()
+    }
+
     LaunchedEffect(selectedShop.value) {
         selectedShop.value?.let { shop ->
             cameraPositionState.animate(
