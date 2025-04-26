@@ -19,6 +19,7 @@ interface HotPepperGourmetService {
         @Query("order") order: Int? = 4,
         @Query("start") start: Int = 1,
         @Query("id") id: String? = null,
+        @Query("genre") genre: String? = null,
         @QueryMap filters: Map<String, String> = emptyMap<String, String>()
     ): ShopResponse
 

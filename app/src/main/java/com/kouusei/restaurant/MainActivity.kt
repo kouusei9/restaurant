@@ -132,7 +132,7 @@ class MainActivity : ComponentActivity() {
                                     restaurantViewModel.onKeyWordChange(it)
                                 },
                                 onSearch = {
-                                    restaurantViewModel.searchShopsByName()
+                                    restaurantViewModel.reloadShopList()
                                 },
                                 suggestions = shopNames
                             )
@@ -463,9 +463,12 @@ fun HomeScreen(
     onIsFavorite: (id: String) -> Boolean,
 ) {
     val state by restaurantViewModel.restaurantViewState.collectAsState()
+
     val distanceRange by restaurantViewModel.distanceRange.collectAsState()
     val orderMethod by restaurantViewModel.orderMethod.collectAsState()
+    val genre by restaurantViewModel.genre.collectAsState()
     val searchFilters by restaurantViewModel.searchFilters.collectAsState()
+
     val isLoading by restaurantViewModel.isLoading.collectAsState()
     val isReachEnd by restaurantViewModel.isReachEnd.collectAsState()
 
@@ -497,7 +500,11 @@ fun HomeScreen(
                     selectedOrderMethod = orderMethod,
                     state = searchFilters,
                     keyword = keyword,
-                    listState = filterListState
+                    listState = filterListState,
+                    selectedGenre = genre,
+                    onSelectedGenreChange = {
+                        restaurantViewModel.onGenreChange(it)
+                    },
                 )
                 if (markerType == List) {
                     RestaurantList(

@@ -9,6 +9,10 @@
     <string name="search">探す</string>
     <string name="permission_deny">位置情報へのアクセスを許可してください。</string>
 
+    <!--    FilterView  -->
+    <string name="filter_clear">クリア</string>
+    <string name="filter_genre">ジャンル</string>
+
     <!--    ListView -->
     <string name="last_item">最後</string>
 

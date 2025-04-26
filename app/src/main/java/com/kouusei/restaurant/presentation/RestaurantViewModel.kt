@@ -11,6 +11,7 @@ import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.utils.ApiResult
 import com.kouusei.restaurant.presentation.common.DistanceRange
 import com.kouusei.restaurant.presentation.common.Filter
+import com.kouusei.restaurant.presentation.common.Genre
 import com.kouusei.restaurant.presentation.common.OrderMethod
 import com.kouusei.restaurant.presentation.entities.SearchFilters
 import com.kouusei.restaurant.presentation.entities.ShopSummary
@@ -41,15 +42,23 @@ class RestaurantViewModel @Inject constructor(
 
     private var _location: LatLng? = null
 
+    // filter distance
     private val _distanceRange = MutableStateFlow<DistanceRange>(DistanceRange.RANGE_1000M)
     val distanceRange: StateFlow<DistanceRange> = _distanceRange.asStateFlow()
 
+    // filter order
     private val _orderMethod = MutableStateFlow<OrderMethod>(OrderMethod.Order_Distance)
     val orderMethod: StateFlow<OrderMethod> = _orderMethod.asStateFlow()
 
+    // filter genre
+    private val _genres = MutableStateFlow<Genre>(Genre.Genre_G000)
+    val genre: StateFlow<Genre> = _genres.asStateFlow()
+
+    // filter keyword
     private val _keyword = MutableStateFlow<String>("")
     val keyword: StateFlow<String> = _keyword.asStateFlow()
 
+    // filter others
     private val _searchFilters = MutableStateFlow<SearchFilters>(SearchFilters())
     val searchFilters: StateFlow<SearchFilters> = _searchFilters.asStateFlow()
 
@@ -67,8 +76,10 @@ class RestaurantViewModel @Inject constructor(
 
     }
 
-    fun resetFilters() {
+    fun resetAllFilters() {
         _searchFilters.value = SearchFilters()
+        _distanceRange.value = DistanceRange.RANGE_1000M
+        _genres.value = Genre.Genre_G000
     }
 
     fun onKeyWordChange(keyword: String) {
@@ -78,6 +89,26 @@ class RestaurantViewModel @Inject constructor(
     fun onOrderMethodChange(method: OrderMethod) {
         _orderMethod.value = method
         reloadShopList()
+    }
+
+    fun onDistanceRangeChange(distanceRange: DistanceRange) {
+        _distanceRange.value = distanceRange
+        reloadShopList()
+    }
+
+    fun onGenreChange(genre: Genre) {
+        Log.d(TAG, "onGenreChange: $genre")
+        _genres.value = genre
+        reloadShopList()
+    }
+
+    fun getGenreValue(): String? {
+        val result = if (genre.value == Genre.Genre_G000)
+            null
+        else
+            genre.value.value
+        Log.d(TAG, "getGenreValue: $result")
+        return result
     }
 
     fun onSelectedShopChange(shop: ShopSummary) {
@@ -138,8 +169,8 @@ class RestaurantViewModel @Inject constructor(
      * used when call from top bar.
      * reset filters and range to no selected
      */
-    fun searchShopsByName() {
-        resetFilters()
+    fun resetFilterAndReload() {
+        resetAllFilters()
         _distanceRange.value = DistanceRange.RANGE_NO
         reloadShopList()
     }
@@ -162,7 +193,15 @@ class RestaurantViewModel @Inject constructor(
                     range = distanceRange.value,
                     order = order,
                 ) { result ->
-                    refreshShopList(result)
+                    if (result is ApiResult.Success) {
+                        if (result.data.results_available == 0 && distanceRange.value != DistanceRange.RANGE_NO) {
+                            resetAllFilters()
+                            _distanceRange.value = DistanceRange.RANGE_NO
+                            reloadShopList()
+                        } else {
+                            refreshShopList(result)
+                        }
+                    }
                 }
             }
         }
@@ -225,11 +264,6 @@ class RestaurantViewModel @Inject constructor(
         }
     }
 
-    fun onDistanceRangeChange(distanceRange: DistanceRange) {
-        _distanceRange.value = distanceRange
-        reloadShopList()
-    }
-
     /**
      * load shop name list
      */
@@ -278,17 +312,33 @@ class RestaurantViewModel @Inject constructor(
     ) {
         withContext(Dispatchers.IO) {
             if (keyword.isNotEmpty()) {
-                onResult(
-                    gourmetRepository.searchShops(
-                        keyword = keyword,
-                        lat = lat,
-                        lng = lng,
-                        range = null,
-                        filters = searchFilters.value.toQueryMap(),
-                        start = start,
-                        order = order
+                if (range == DistanceRange.RANGE_NO) {
+                    onResult(
+                        gourmetRepository.searchShops(
+                            keyword = keyword,
+                            lat = null,
+                            lng = null,
+                            range = null,
+                            filters = searchFilters.value.toQueryMap(),
+                            start = start,
+                            order = order,
+                            genre = getGenreValue()
+                        )
                     )
-                )
+                } else {
+                    onResult(
+                        gourmetRepository.searchShops(
+                            keyword = keyword,
+                            lat = lat,
+                            lng = lng,
+                            range = range.value,
+                            filters = searchFilters.value.toQueryMap(),
+                            start = start,
+                            order = order,
+                            genre = getGenreValue()
+                        )
+                    )
+                }
             } else if (range == DistanceRange.RANGE_NO) {
                 _distanceRange.value = DistanceRange.RANGE_1000M
                 onResult(
@@ -296,10 +346,11 @@ class RestaurantViewModel @Inject constructor(
                         keyword = keyword,
                         lat = lat,
                         lng = lng,
-                        range = range.value,
+                        range = distanceRange.value.value,
                         filters = searchFilters.value.toQueryMap(),
                         start = start,
-                        order = order
+                        order = order,
+                        genre = getGenreValue()
                     )
                 )
             } else {
@@ -308,10 +359,11 @@ class RestaurantViewModel @Inject constructor(
                         keyword = keyword,
                         lat = lat,
                         lng = lng,
-                        range = range.value,
+                        range = distanceRange.value.value,
                         filters = searchFilters.value.toQueryMap(),
                         start = start,
-                        order = order
+                        order = order,
+                        genre = getGenreValue()
                     )
                 )
             }

@@ -6,8 +6,18 @@ import com.kouusei.restaurant.data.api.entities.ShopName
 import com.kouusei.restaurant.data.utils.ApiResult
 import javax.inject.Inject
 
+val TAG = "HotPepperGourmetRepositoryImpl"
+
 class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService: HotPepperGourmetService) :
     HotPepperGourmetRepository {
+
+    companion object ErrorCode {
+        // internal error
+        const val internalError: Int = 100
+
+        // Not Found
+        const val notFoundError: Int = 404
+    }
 
     override suspend fun searchShops(
         keyword: String?,
@@ -16,6 +26,7 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
         range: Int?,
         start: Int,
         order: Int?,
+        genre: String?,
         filters: Map<String, String>
     ): ApiResult<Results> {
         return try {
@@ -27,15 +38,19 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                     range = range,
                     filters = filters,
                     start = start,
-                    order = order
+                    order = order,
+                    genre = genre
                 )
             if (response.results.error != null) {
-                ApiResult.Error(response.results.error.message)
+                ApiResult.Error(
+                    code = response.results.error.code,
+                    message = response.results.error.message
+                )
             } else {
                 ApiResult.Success(response.results)
             }
         } catch (e: Exception) {
-            ApiResult.Error(e.message ?: "Unknown error")
+            ApiResult.Error(code = internalError, message = e.message ?: "Unknown error")
         }
     }
 
@@ -43,12 +58,15 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
         return try {
             val response = apiService.shopNameSearch(keyword = keyword)
             if (response.results.error != null) {
-                ApiResult.Error(response.results.error.message)
+                ApiResult.Error(
+                    code = response.results.error.code,
+                    message = response.results.error.message
+                )
             } else {
                 ApiResult.Success(response.results.shop)
             }
         } catch (e: Exception) {
-            ApiResult.Error(e.message ?: "Unknown error")
+            ApiResult.Error(code = internalError, e.message ?: "Unknown error")
         }
     }
 
@@ -57,16 +75,19 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
             val response =
                 apiService.gourmetSearch(id = id)
             if (response.results.error != null) {
-                ApiResult.Error(response.results.error.message)
+                ApiResult.Error(
+                    code = response.results.error.code,
+                    message = response.results.error.message
+                )
             } else {
                 if (response.results.shop.isEmpty()) {
-                    ApiResult.Error("Not Found")
+                    ApiResult.Error(code = notFoundError, message = "Not Found")
                 } else {
                     ApiResult.Success(response.results.shop.get(0))
                 }
             }
         } catch (e: Exception) {
-            ApiResult.Error(e.message ?: "Unknown error")
+            ApiResult.Error(code = internalError, e.message ?: "Unknown error")
         }
     }
 
@@ -75,16 +96,19 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
             val response =
                 apiService.gourmetSearch(id = ids.joinToString(","))
             if (response.results.error != null) {
-                ApiResult.Error(response.results.error.message)
+                ApiResult.Error(
+                    code = response.results.error.code,
+                    message = response.results.error.message
+                )
             } else {
                 if (response.results.shop.isEmpty()) {
-                    ApiResult.Error("Not Found")
+                    ApiResult.Error(code = notFoundError, message = "Not Found")
                 } else {
                     ApiResult.Success(response.results.shop)
                 }
             }
         } catch (e: Exception) {
-            ApiResult.Error(e.message ?: "Unknown error")
+            ApiResult.Error(code = internalError, e.message ?: "Unknown error")
         }
     }
 }

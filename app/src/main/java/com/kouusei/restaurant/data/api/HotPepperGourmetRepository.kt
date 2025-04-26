@@ -19,6 +19,7 @@ interface HotPepperGourmetRepository {
         range: Int?,
         start: Int = 1,
         order: Int?,
+        genre: String?,
         filters: Map<String, String>
     ): ApiResult<Results>
 
