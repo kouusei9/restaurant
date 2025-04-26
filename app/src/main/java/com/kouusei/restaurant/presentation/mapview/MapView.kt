@@ -82,7 +82,9 @@ fun MapView(
     viewState: RestaurantViewState.Success,
     selectedShop: ShopSummary?,
     onSelectedShopChange: (ShopSummary) -> Unit,
-    onNavDetail: (id: String) -> Unit
+    onNavDetail: (id: String) -> Unit,
+    onFavoriteToggled: (id: String) -> Unit,
+    onIsFavorite: (id: String) -> Boolean,
 ) {
     Box(
         modifier = Modifier
@@ -110,7 +112,9 @@ fun MapView(
             onNavDetail = onNavDetail,
             selectedShop = selectedShop,
             listState = listState,
-            onSelectedShopChange = onSelectedShopChange
+            onSelectedShopChange = onSelectedShopChange,
+            onIsFavorite = onIsFavorite,
+            onFavoriteToggled = onFavoriteToggled
         )
     }
 }
@@ -247,7 +251,9 @@ fun FloatList(
     selectedShop: ShopSummary?,
     listState: LazyListState,
     onSelectedShopChange: (ShopSummary) -> Unit,
-    onNavDetail: (id: String) -> Unit
+    onNavDetail: (id: String) -> Unit,
+    onFavoriteToggled: (id: String) -> Unit,
+    onIsFavorite: (id: String) -> Boolean,
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val padding = screenWidth * 0.05f
@@ -316,8 +322,10 @@ fun FloatList(
                     RestaurantItemBar(
                         modifier = Modifier
                             .width(itemWidth),
+                        isLike = onIsFavorite(shop.id),
                         shop = shop,
-                        onNavDetail = onNavDetail
+                        onNavDetail = onNavDetail,
+                        onLoveToggled = onFavoriteToggled
                     )
                 }
             }
@@ -381,6 +389,9 @@ fun MapViewPreview(
         cameraPositionState = cameraPositionState,
         listState = rememberLazyListState(),
         selectedShop = null,
-        onSelectedShopChange = { }
-    ) { }
+        onSelectedShopChange = { },
+        onIsFavorite = { a -> false },
+        onNavDetail = { },
+        onFavoriteToggled = {}
+    )
 }

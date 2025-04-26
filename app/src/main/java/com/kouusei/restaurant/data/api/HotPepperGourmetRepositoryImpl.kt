@@ -69,4 +69,22 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
             ApiResult.Error(e.message ?: "Unknown error")
         }
     }
+
+    override suspend fun getShopsByIds(ids: Set<String>): ApiResult<List<Shop>> {
+        return try {
+            val response =
+                apiService.gourmetSearch(id = ids.joinToString(","))
+            if (response.results.error != null) {
+                ApiResult.Error(response.results.error.message)
+            } else {
+                if (response.results.shop.isEmpty()) {
+                    ApiResult.Error("Not Found")
+                } else {
+                    ApiResult.Success(response.results.shop)
+                }
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Unknown error")
+        }
+    }
 }

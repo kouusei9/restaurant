@@ -33,4 +33,10 @@ interface HotPepperGourmetRepository {
      * search shop by id
      */
     suspend fun shopDetailById(id: String): ApiResult<Shop>
+
+    /**
+     * in: set of shop ids
+     * out: list of shops detail.
+     */
+    suspend fun getShopsByIds(ids: Set<String>): ApiResult<List<Shop>>
 }

@@ -1,4 +1,4 @@
-package com.kouusei.restaurant.presentation
+package com.kouusei.restaurant.presentation.detailview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

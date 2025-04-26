@@ -8,22 +8,17 @@ espressoCore = "3.6.1"
 lifecycle = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2024.04.01"
-
 mapCompose = "4.4.1"
-
 retrofit = "2.9.0"
 okhttp = "4.11.0"
-
 hilt = "2.51.1"
-
 ksp = "2.0.0-1.0.23"
-
 coil = "2.4.0"
-
 gmsLocation = "21.3.0"
-
-nav_version = "2.8.9"
+navVersion = "2.8.9"
 serialization = "1.6.3"
+playService = "1.7.3"
+datastore = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -47,13 +42,14 @@ android-maps-compose-utils = { group = "com.google.maps.android", name = "maps-c
 android-maps-compose-widgets = { group = "com.google.maps.android", name = "maps-compose-widgets", version.ref = "mapCompose" }
 
 # navigation
-androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "nav_version" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navVersion" }
 
 # serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 
 # location
 android-gms-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "gmsLocation" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "playService" }
 
 # retrofit
 squareup-retrofit2 = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
@@ -69,6 +65,9 @@ dagger-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref
 
 # coil
 io-coil = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
+
+# data store
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

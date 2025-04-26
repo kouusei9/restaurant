@@ -1,4 +1,4 @@
-package com.kouusei.restaurant.presentation
+package com.kouusei.restaurant.presentation.detailview
 
 import com.kouusei.restaurant.presentation.entities.ShopDetail
 

@@ -16,12 +16,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,7 +62,9 @@ fun RestaurantList(
     isLoadingMore: Boolean,
     isReachEnd: Boolean,
     onLoadMore: () -> Unit,
-    onNavDetail: (id: String) -> Unit
+    onNavDetail: (id: String) -> Unit,
+    onIsFavorite: (id: String) -> Boolean,
+    onFavoriteToggled: (id: String) -> Unit,
 ) {
     val TAG = "ListView"
     Log.d(TAG, "RestaurantList: Enter, isLoadingMore: $isLoadingMore, isReachEnd: $isReachEnd")
@@ -111,7 +118,9 @@ fun RestaurantList(
             RestaurantItemBar(
                 modifier = Modifier.fillMaxWidth(),
                 shop = it,
-                onNavDetail = onNavDetail
+                onNavDetail = onNavDetail,
+                isLike = onIsFavorite(it.id),
+                onLoveToggled = onFavoriteToggled
             )
         }
 
@@ -134,68 +143,99 @@ fun RestaurantList(
 fun RestaurantItemBar(
     modifier: Modifier = Modifier,
     shop: ShopSummary,
-    onNavDetail: (id: String) -> Unit
+    isLike: Boolean = false,
+    onNavDetail: (id: String) -> Unit,
+    onLoveToggled: (id: String) -> Unit = {}
 ) {
-    // TODO move color to theme
-    Row(
-        modifier = modifier
-            .padding(top = 4.dp, bottom = 4.dp)
-            .height(120.dp)
-            .shadow(
-                elevation = 12.dp,
-                // 0xffFD7357
-                ambientColor = MaterialTheme.colorScheme.primary,
-                spotColor = MaterialTheme.colorScheme.primary
-            )
-            .clip(RoundedCornerShape(8.dp))
-            .background(color = MaterialTheme.colorScheme.surfaceContainer)
-            .clickable {
-                onNavDetail(shop.id)
+    Box(modifier = modifier
+        .padding(top = 4.dp, bottom = 4.dp)
+        .height(120.dp)
+        .shadow(
+            elevation = 12.dp,
+            // 0xffFD7357
+            ambientColor = MaterialTheme.colorScheme.primary,
+            spotColor = MaterialTheme.colorScheme.primary
+        )
+        .clip(RoundedCornerShape(8.dp))
+        .background(color = MaterialTheme.colorScheme.surfaceContainer)
+        .clickable {
+            onNavDetail(shop.id)
+        }) {
+        Row(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                AsyncImage(
+                    model = shop.url, contentDescription = "shop image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                    placeholder = debugPlaceholder(R.drawable.test_shop_img),
+                )
             }
-    ) {
-        Box(modifier = Modifier.weight(1f)) {
-            AsyncImage(
-                model = shop.url, contentDescription = "shop image",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds,
-                placeholder = debugPlaceholder(R.drawable.test_shop_img),
-            )
-        }
 
-        Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-        Column(modifier = Modifier.weight(2f)) {
-            Text(
-                text = shop.name,
-                maxLines = 1,
-                color = MaterialTheme.colorScheme.onSurface, fontSize = 20.sp,
-                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
-            )
-            Row(
-                modifier = Modifier
+            Column(modifier = Modifier.weight(2f)) {
+                Box(modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                Column(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .padding(end = 8.dp),
-                    horizontalAlignment = Alignment.End
-                ) {
+                    .padding(end = 40.dp)) {
                     Text(
-                        text = shop.budget,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 16.sp
-                    )
-                    Text(
-                        text = shop.access,
-                        maxLines = 1,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 10.sp
+                        text = shop.name,
+                        maxLines = 2,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
                     )
                 }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .padding(end = 8.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = shop.budget,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = shop.access,
+                            maxLines = 1,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 8.dp, end = 8.dp)
+                .wrapContentSize()
+                .clickable {
+                    onLoveToggled(shop.id)
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            if (isLike) {
+                Icon(
+                    Icons.Default.Favorite, contentDescription = "love icon",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Icon(
+                    Icons.Default.FavoriteBorder, contentDescription = "love icon",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
@@ -227,7 +267,7 @@ fun RestaurantListPreview() {
                     ),
                     ShopSummary(
                         id = "2",
-                        name = "遊楽旬彩 直222",
+                        name = "遊楽旬彩 直222 dfdsafdsa Resutaurant is Long",
                         url = "https://imgfp.hotp.jp/IMGH/75/56/P027077556/P027077556_100.jpg",
                         budget = "5001～7000円",
                         access = "近鉄大阪上本町駅6出dddddddddd口より徒歩約9分",
@@ -240,7 +280,9 @@ fun RestaurantListPreview() {
             onNavDetail = {},
             onLoadMore = {},
             isLoadingMore = false,
-            isReachEnd = false
+            isReachEnd = false,
+            onIsFavorite = { false },
+            onFavoriteToggled = {},
         )
     }
 }

@@ -61,11 +61,13 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
-import com.kouusei.restaurant.presentation.DetailViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.common.FilterView
 import com.kouusei.restaurant.presentation.detailview.DetailView
+import com.kouusei.restaurant.presentation.detailview.DetailViewModel
+import com.kouusei.restaurant.presentation.favoriteview.FavoriteListScreen
+import com.kouusei.restaurant.presentation.favoriteview.FavoriteShopsModel
 import com.kouusei.restaurant.presentation.listview.RestaurantList
 import com.kouusei.restaurant.presentation.mapview.MapView
 import com.kouusei.restaurant.presentation.utils.toLatLng
@@ -212,35 +214,63 @@ fun AppNavGraph(
     keyword: String,
     detailViewModel: DetailViewModel
 ) {
+    val favoriteShopsModel: FavoriteShopsModel = viewModel()
+    val favoriteState by favoriteShopsModel.favoriteState.collectAsState()
+
+    val favoriteShopIds by favoriteShopsModel.shopIds.collectAsState()
+
     NavHost(navController, startDestination = Map.route) {
         composable(Map.route) {
             HomeScreen(
                 nav = navController,
-                Modifier.padding(
+                modifier = Modifier.padding(
                     top = innerPadding.calculateTopPadding(),
                     bottom = innerPadding.calculateBottomPadding()
                 ),
-                fusedLocationClient,
-                Map,
-                restaurantViewModel,
-                keyword = keyword
+                fusedLocationClient = fusedLocationClient,
+                markerType = Map,
+                restaurantViewModel = restaurantViewModel,
+                keyword = keyword,
+                favoriteShopsModel = favoriteShopsModel,
+                onIsFavorite = {
+                    favoriteShopIds.contains(it)
+                }
             )
         }
         composable(List.route) {
             HomeScreen(
                 nav = navController,
-                Modifier.padding(
+                modifier = Modifier.padding(
                     top = innerPadding.calculateTopPadding(),
                     bottom = innerPadding.calculateBottomPadding()
                 ),
-                fusedLocationClient,
-                List,
-                restaurantViewModel,
-                keyword = keyword
+                fusedLocationClient = fusedLocationClient,
+                markerType = List,
+                restaurantViewModel = restaurantViewModel,
+                keyword = keyword,
+                favoriteShopsModel = favoriteShopsModel,
+                onIsFavorite = {
+                    favoriteShopIds.contains(it)
+                }
             )
         }
         composable(Favorites.route) {
-
+            FavoriteListScreen(
+                modifier = Modifier.padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
+                ),
+                viewState = favoriteState,
+                onNavDetail = {
+                    navController.navigate(route = Detail(id = it).route)
+                },
+                onIsFavorite = {
+                    favoriteShopIds.contains(it)
+                },
+                onFavoriteToggled = {
+                    favoriteShopsModel.toggleFavorite(it)
+                }
+            )
         }
         composable(
             "detail/{id}",
@@ -273,9 +303,13 @@ fun AppNavGraph(
                 ),
                 id = shopId,
                 detailViewModel = detailViewModel,
-                onNavBack = {
-                    navController.popBackStack()
-                })
+                onIsFavorite = {
+                    favoriteShopIds.contains(it)
+                },
+                onFavoriteToggled = {
+                    favoriteShopsModel.toggleFavorite(it)
+                }
+            )
         }
     }
 }
@@ -424,7 +458,9 @@ fun HomeScreen(
     fusedLocationClient: FusedLocationProviderClient,
     markerType: Route,
     restaurantViewModel: RestaurantViewModel,
-    keyword: String
+    favoriteShopsModel: FavoriteShopsModel,
+    keyword: String,
+    onIsFavorite: (id: String) -> Boolean,
 ) {
     val state by restaurantViewModel.restaurantViewState.collectAsState()
     val distanceRange by restaurantViewModel.distanceRange.collectAsState()
@@ -471,7 +507,11 @@ fun HomeScreen(
                             restaurantViewModel.loadMore()
                         },
                         isLoadingMore = isLoading,
-                        isReachEnd = isReachEnd
+                        isReachEnd = isReachEnd,
+                        onIsFavorite = onIsFavorite,
+                        onFavoriteToggled = {
+                            favoriteShopsModel.toggleFavorite(it)
+                        }
                     )
                 } else if (markerType == Map) {
                     MapView(
@@ -484,7 +524,12 @@ fun HomeScreen(
                         },
                         onNavDetail = {
                             nav.navigate(route = Detail(id = it).route)
-                        })
+                        },
+                        onIsFavorite = onIsFavorite,
+                        onFavoriteToggled = {
+                            favoriteShopsModel.toggleFavorite(it)
+                        }
+                    )
                 }
             }
         }
