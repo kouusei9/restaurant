@@ -74,7 +74,15 @@ fun DetailTopBar(
             )
         }
 
-        Text(text = title, modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.onPrimary)
+        // TODO title too long. auto scale title?
+        Text(
+            text = title,
+            maxLines = 1,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth(0.6f),
+            color = MaterialTheme.colorScheme.onPrimary
+        )
     }
 }
 
