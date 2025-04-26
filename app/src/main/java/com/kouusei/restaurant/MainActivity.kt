@@ -470,6 +470,7 @@ fun HomeScreen(
     val searchFilters by restaurantViewModel.searchFilters.collectAsState()
 
     val isLoading by restaurantViewModel.isLoading.collectAsState()
+    val isReloading by restaurantViewModel.isReloading.collectAsState()
     val isReachEnd by restaurantViewModel.isReachEnd.collectAsState()
 
     val cameraPositionState by restaurantViewModel.cameraPositionState.collectAsState()
@@ -483,7 +484,9 @@ fun HomeScreen(
             ErrorScreen((state as RestaurantViewState.Error).message)
         }
 
-        RestaurantViewState.Loading -> LoadingScreen()
+        RestaurantViewState.Loading -> {
+            LoadingScreen()
+        }
         is RestaurantViewState.Success -> {
             Column(modifier = modifier) {
                 FilterView(
@@ -518,6 +521,7 @@ fun HomeScreen(
                         isLoadingMore = isLoading,
                         isReachEnd = isReachEnd,
                         onIsFavorite = onIsFavorite,
+                        isReloading = isReloading,
                         onFavoriteToggled = {
                             favoriteShopsModel.toggleFavorite(it)
                         }
@@ -535,6 +539,7 @@ fun HomeScreen(
                             nav.navigate(route = Detail(id = it).route)
                         },
                         onIsFavorite = onIsFavorite,
+                        isReloading = isReloading,
                         onFavoriteToggled = {
                             favoriteShopsModel.toggleFavorite(it)
                         }

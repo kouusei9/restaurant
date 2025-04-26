@@ -2,6 +2,12 @@ package com.kouusei.restaurant.presentation.listview
 
 import android.util.Log
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,7 +30,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,6 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
@@ -61,6 +68,7 @@ fun RestaurantList(
     modifier: Modifier = Modifier,
     isLoadingMore: Boolean,
     isReachEnd: Boolean,
+    isReloading: Boolean,
     onLoadMore: () -> Unit,
     onNavDetail: (id: String) -> Unit,
     onIsFavorite: (id: String) -> Boolean,
@@ -115,25 +123,24 @@ fun RestaurantList(
             }
         }
         items(shops, key = { it.id }) {
-            RestaurantItemBar(
-                modifier = Modifier.fillMaxWidth(),
-                shop = it,
-                onNavDetail = onNavDetail,
-                isLike = onIsFavorite(it.id),
-                onLoveToggled = onFavoriteToggled
-            )
+            if (isReloading) {
+                RestaurantItemBarLoading()
+            } else {
+                RestaurantItemBar(
+                    modifier = Modifier.fillMaxWidth(),
+                    shop = it,
+                    onNavDetail = onNavDetail,
+                    isLike = onIsFavorite(it.id),
+                    onLoveToggled = onFavoriteToggled
+                )
+            }
         }
 
         item {
             if (isReachEnd) {
                 Text(text = stringResource(R.string.last_item))
             } else {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .wrapContentWidth(Alignment.CenterHorizontally)
-                )
+                RestaurantItemBarLoading()
             }
         }
     }
@@ -162,7 +169,8 @@ fun RestaurantItemBar(
             onNavDetail(shop.id)
         }) {
         Row(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
         ) {
             Box(modifier = Modifier.weight(1f)) {
                 AsyncImage(
@@ -176,9 +184,11 @@ fun RestaurantItemBar(
             Spacer(modifier = Modifier.width(8.dp))
 
             Column(modifier = Modifier.weight(2f)) {
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 40.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 40.dp)
+                ) {
                     Text(
                         text = shop.name,
                         maxLines = 2,
@@ -242,6 +252,101 @@ fun RestaurantItemBar(
 }
 
 @Composable
+fun shimmerBrush(): Brush {
+    val shimmerColors = listOf(
+        Color.LightGray.copy(alpha = 0.6f),
+        Color.LightGray.copy(alpha = 0.2f),
+        Color.LightGray.copy(alpha = 0.6f)
+    )
+    val transition = rememberInfiniteTransition()
+    val translateAnim = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+    return Brush.linearGradient(
+        colors = shimmerColors,
+        start = Offset.Zero,
+        end = Offset(x = translateAnim.value, y = translateAnim.value)
+    )
+}
+
+@Composable
+fun RestaurantItemBarLoading(
+    modifier: Modifier = Modifier
+) {
+    val brush = shimmerBrush()
+
+    Box(
+        modifier = modifier
+            .padding(top = 4.dp, bottom = 4.dp)
+            .height(120.dp)
+            .shadow(
+                elevation = 12.dp,
+                ambientColor = MaterialTheme.colorScheme.primary,
+                spotColor = MaterialTheme.colorScheme.primary
+            )
+            .clip(RoundedCornerShape(8.dp))
+            .background(color = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .background(brush)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column(modifier = Modifier.weight(2f)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .padding(end = 8.dp, top = 8.dp)
+                        .background(brush, RoundedCornerShape(4.dp))
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .padding(end = 8.dp, bottom = 8.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .height(22.dp)
+                                .background(brush, RoundedCornerShape(4.dp))
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .height(22.dp)
+                                .background(brush, RoundedCornerShape(4.dp))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun debugPlaceholder(@DrawableRes debugPreview: Int) =
     if (LocalInspectionMode.current) {
         painterResource(id = debugPreview)
@@ -279,10 +384,11 @@ fun RestaurantListPreview() {
             ),
             onNavDetail = {},
             onLoadMore = {},
-            isLoadingMore = false,
+            isLoadingMore = true,
             isReachEnd = false,
             onIsFavorite = { false },
             onFavoriteToggled = {},
+            isReloading = false
         )
     }
 }

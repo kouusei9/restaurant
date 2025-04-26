@@ -70,6 +70,7 @@ import com.kouusei.restaurant.R
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.presentation.listview.RestaurantItemBar
+import com.kouusei.restaurant.presentation.listview.RestaurantItemBarLoading
 import com.kouusei.restaurant.presentation.utils.toLatLng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -84,6 +85,7 @@ fun MapView(
     cameraPositionState: CameraPositionState,
     viewState: RestaurantViewState.Success,
     selectedShop: ShopSummary?,
+    isReloading: Boolean,
     onSelectedShopChange: (ShopSummary) -> Unit,
     onNavDetail: (id: String) -> Unit,
     onFavoriteToggled: (id: String) -> Unit,
@@ -123,6 +125,7 @@ fun MapView(
             onIsFavorite = onIsFavorite,
             onFavoriteToggled = onFavoriteToggled,
             isBarVisible = isBarVisible,
+            isReloading = isReloading,
             onBarVisibleChange = {
                 isBarVisible = it
             }
@@ -268,6 +271,7 @@ fun FloatList(
     selectedShop: ShopSummary?,
     listState: LazyListState,
     isBarVisible: Boolean,
+    isReloading: Boolean,
     onBarVisibleChange: (Boolean) -> Unit,
     onSelectedShopChange: (ShopSummary) -> Unit,
     onNavDetail: (id: String) -> Unit,
@@ -339,14 +343,21 @@ fun FloatList(
                 userScrollEnabled = true
             ) {
                 items(shops, key = { it.id }) { shop ->
-                    RestaurantItemBar(
-                        modifier = Modifier
-                            .width(itemWidth),
-                        isLike = onIsFavorite(shop.id),
-                        shop = shop,
-                        onNavDetail = onNavDetail,
-                        onLoveToggled = onFavoriteToggled
-                    )
+                    if (isReloading) {
+                        RestaurantItemBarLoading(
+                            modifier = Modifier
+                                .width(itemWidth)
+                        )
+                    } else {
+                        RestaurantItemBar(
+                            modifier = Modifier
+                                .width(itemWidth),
+                            isLike = onIsFavorite(shop.id),
+                            shop = shop,
+                            onNavDetail = onNavDetail,
+                            onLoveToggled = onFavoriteToggled
+                        )
+                    }
                 }
             }
 
@@ -422,6 +433,7 @@ fun MapViewPreview(
         onSelectedShopChange = { },
         onIsFavorite = { a -> false },
         onNavDetail = { },
-        onFavoriteToggled = {}
+        onFavoriteToggled = {},
+        isReloading = true
     )
 }

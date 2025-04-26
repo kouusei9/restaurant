@@ -64,6 +64,10 @@ class RestaurantViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow<Boolean>(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isReloading = MutableStateFlow<Boolean>(false)
+    val isReloading: StateFlow<Boolean> = _isReloading.asStateFlow()
+
     private val _isReachEnd = MutableStateFlow<Boolean>(false)
     val isReachEnd: StateFlow<Boolean> = _isReachEnd.asStateFlow()
 
@@ -180,7 +184,8 @@ class RestaurantViewModel @Inject constructor(
         Log.d(TAG, "reloadShopList: Called reload shop list")
         _isReachEnd.value = false
         _isLoading.value = false
-        _restaurantViewState.value = RestaurantViewState.Loading
+        _isReloading.value = true
+//        _restaurantViewState.value = RestaurantViewState.Loading
 
         viewModelScope.launch {
             val order =
@@ -199,8 +204,11 @@ class RestaurantViewModel @Inject constructor(
                             _distanceRange.value = DistanceRange.RANGE_NO
                             reloadShopList()
                         } else {
+                            _isReloading.value = false
                             refreshShopList(result)
                         }
+                    } else {
+                        _isReloading.value = false
                     }
                 }
             }
@@ -372,6 +380,7 @@ class RestaurantViewModel @Inject constructor(
 
     fun loadMore() {
         _isLoading.value = true
+        _isReloading.value = false
         Log.d(TAG, "loadMore: ${isLoading.value}")
 
         if (restaurantViewState.value is RestaurantViewState.Success) {
