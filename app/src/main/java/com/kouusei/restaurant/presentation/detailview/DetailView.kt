@@ -35,6 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -137,16 +138,19 @@ fun ShopDetailView(
 
         CustomColumn {
             CustomTitle(text = stringResource(R.string.title_open))
-            splitBusinessHours(shopDetail.openTime).forEach { pair ->
-                CustomText(text = pair.first)
-                Text(
-                    modifier = Modifier.padding(start = 16.dp),
-                    text = pair.second,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 10.sp,
-                    lineHeight = 10.sp
-                )
+            Column {
+                splitBusinessHours(shopDetail.openTime).forEach { pair ->
+                    CustomText(text = pair.first, lineHeight = 12.sp)
+                    Text(
+                        modifier = Modifier.padding(start = 16.dp),
+                        text = pair.second,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.sp,
+                        lineHeight = 12.sp
+                    )
+                }
             }
+
             CustomDivider()
             CustomTitle(text = stringResource(R.string.title_close))
             CustomText(text = shopDetail.closeTime)
@@ -321,12 +325,14 @@ fun CustomText(
     text: String,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
     modifier: Modifier = Modifier,
+    lineHeight: TextUnit = TextUnit.Unspecified
 ) {
     Text(
         text = text,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = modifier.padding(start = 8.dp),
-        style = style
+        style = style,
+        lineHeight = lineHeight
     )
 }
 
