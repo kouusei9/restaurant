@@ -90,7 +90,9 @@ fun FilterView(
                 ) {
                     val method = OrderMethod.fromDes(it)
                     method?.let {
-                        onOrderMethodChange(method)
+                        if (method != selectedOrderMethod) {
+                            onOrderMethodChange(method)
+                        }
                     }
                 }
             }
@@ -163,7 +165,9 @@ fun DistanceFilterChip(
                         )
                     },
                     onClick = {
-                        onDistanceChange(option)
+                        if (option != selectedDistance) {
+                            onDistanceChange(option)
+                        }
                         distanceMenuExpanded = false
                     }
                 )
