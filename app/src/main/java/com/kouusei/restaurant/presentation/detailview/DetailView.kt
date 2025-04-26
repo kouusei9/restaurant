@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,6 +44,7 @@ import com.kouusei.restaurant.presentation.DetailViewModel
 import com.kouusei.restaurant.presentation.DetailViewState
 import com.kouusei.restaurant.presentation.entities.ShopDetail
 import com.kouusei.restaurant.presentation.listview.debugPlaceholder
+import com.kouusei.restaurant.presentation.utils.splitBusinessHours
 
 val TAG = "DetailView"
 
@@ -125,32 +127,43 @@ fun ShopDetailView(
             CustomTitle(text = "¥ ${shopDetail.budget}", modifier = Modifier.padding(start = 8.dp))
             Row {
                 CustomRowWithIcon(
-                    text = "カード支払い",
-                    isCheck = shopDetail.card
+                    text = stringResource(R.string.detail_card),
+                    isCheck = shopDetail.card,
+                    modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
 
         CustomColumn {
-            CustomTitle(text = "営業時間：")
-            CustomText(text = shopDetail.openTime)
+            CustomTitle(text = stringResource(R.string.title_open))
+            splitBusinessHours(shopDetail.openTime).forEach { pair ->
+                CustomText(text = pair.first)
+                Text(
+                    modifier = Modifier.padding(start = 16.dp),
+                    text = pair.second,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 10.sp,
+                    lineHeight = 10.sp
+                )
+            }
             CustomDivider()
-            CustomTitle(text = "閉店時間：")
+            CustomTitle(text = stringResource(R.string.title_close))
             CustomText(text = shopDetail.closeTime)
         }
         CustomColumn {
-            CustomTitle(text = "メニュー")
+            CustomTitle(text = stringResource(R.string.title_menu))
             CustomDivider()
 
             Row {
                 CustomRowWithIcon(
-                    text = "コース",
+                    text = stringResource(R.string.detail_course),
                     isCheck = shopDetail.course,
                     modifier = Modifier.weight(1f)
                 )
 
                 CustomRowWithIcon(
-                    text = "食べ放題",
+                    text = stringResource(R.string.detail_free_food),
                     isCheck = shopDetail.freeFood,
                     modifier = Modifier.weight(1f)
                 )
@@ -158,12 +171,12 @@ fun ShopDetailView(
 
             Row {
                 CustomRowWithIcon(
-                    text = "飲み放題",
+                    text = stringResource(R.string.detail_free_drink),
                     isCheck = shopDetail.freeDrink,
                     modifier = Modifier.weight(1f)
                 )
                 CustomRowWithIcon(
-                    text = "Launch",
+                    text = stringResource(R.string.detail_launch),
                     isCheck = shopDetail.lunch,
                     modifier = Modifier.weight(1f)
                 )
@@ -171,62 +184,62 @@ fun ShopDetailView(
 
             Row {
                 CustomRowWithIcon(
-                    text = "English",
+                    text = stringResource(R.string.detail_english),
                     isCheck = shopDetail.english,
                     modifier = Modifier.weight(1f)
                 )
                 CustomRowWithIcon(
-                    text = "ペット",
+                    text = stringResource(R.string.detail_pet),
                     isCheck = shopDetail.pet,
                     modifier = Modifier.weight(1f)
                 )
             }
         }
         CustomColumn {
-            CustomTitle(text = "アクセス")
+            CustomTitle(text = stringResource(R.string.title_access))
             CustomDivider()
             CustomText(text = shopDetail.access)
         }
 
         CustomColumn {
-            CustomTitle(text = "席・設備")
+            CustomTitle(text = stringResource(R.string.title_equipment))
             CustomDivider()
             CustomRowTwoText(
-                text1 = "個室",
+                text1 = stringResource(R.string.detail_private_room),
                 text2 = shopDetail.privateRoom
             )
             CustomDivider()
             CustomRowTwoText(
-                text1 = "禁煙",
+                text1 = stringResource(R.string.detail_no_smoking),
                 text2 = shopDetail.nonSmoking
             )
             CustomDivider()
             CustomRowTwoText(
-                text1 = "掘りごたつ",
+                text1 = stringResource(R.string.detail_horigotatsu),
                 text2 = shopDetail.horigotatsu
             )
             CustomDivider()
             CustomRowTwoText(
-                text1 = "駐車場",
+                text1 = stringResource(R.string.detail_parking),
                 text2 = shopDetail.parking
             )
             CustomDivider()
             CustomRowTwoText(
-                text1 = "バリアフリ",
+                text1 = stringResource(R.string.detail_barrier_free),
                 text2 = shopDetail.barrierFree
             )
             CustomDivider()
             CustomRowTwoText(
-                text1 = "WIFI",
+                text1 = stringResource(R.string.detail_wifi),
                 text2 = shopDetail.wifi
             )
         }
 
         CustomColumn {
-            CustomTitle(text = "特徴・関連情報")
+            CustomTitle(text = stringResource(R.string.title_related))
             CustomDivider()
             CustomRowTwoText(
-                text1 = "お子様連れ",
+                text1 = stringResource(R.string.detail_child),
                 text2 = shopDetail.child
             )
         }
