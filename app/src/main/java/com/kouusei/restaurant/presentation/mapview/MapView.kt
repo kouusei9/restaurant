@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyListState
@@ -30,8 +31,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +50,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -215,7 +215,7 @@ fun FloatingPositionButton(
                             val location = locationProvider.lastLocation.await()
                             location?.let {
                                 cameraPositionState.animate(
-                                    update = CameraUpdateFactory.newLatLngZoom(it.toLatLng(), 30f),
+                                    update = CameraUpdateFactory.newLatLngZoom(it.toLatLng(), 16f),
                                     durationMs = 1000
                                 )
                             }
@@ -236,8 +236,12 @@ fun FloatingPositionButton(
                 .padding(8.dp)
                 .clip(CircleShape)
         ) {
-            // TODO change icon.
-            Icon(Icons.Default.Place, contentDescription = "Go to my location")
+            Icon(
+                modifier = Modifier.size(30.dp),
+                painter = painterResource(R.drawable.near_me_48px),
+                contentDescription = "Go to my location",
+                tint = MaterialTheme.colorScheme.secondary
+            )
         }
     }
 }
@@ -378,7 +382,7 @@ fun zoomAll(
 ) {
     scope.launch {
         cameraPositionState.animate(
-            update = CameraUpdateFactory.newLatLngBounds(boundingBox, 30),
+            update = CameraUpdateFactory.newLatLngBounds(boundingBox, 16),
             durationMs = 100
         )
     }
