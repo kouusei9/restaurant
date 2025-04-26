@@ -17,6 +17,7 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.FloatingActionButton
@@ -44,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -86,6 +89,7 @@ fun MapView(
     onFavoriteToggled: (id: String) -> Unit,
     onIsFavorite: (id: String) -> Boolean,
 ) {
+    var isBarVisible by remember { mutableStateOf(true) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -95,7 +99,10 @@ fun MapView(
             cameraPositionState,
             viewState = viewState,
             selectedShop = selectedShop,
-            onSelectedShopChange = onSelectedShopChange
+            onSelectedShopChange = onSelectedShopChange,
+            onBarVisibleChange = {
+                isBarVisible = it
+            }
         )
 
         FloatingPositionButton(
@@ -114,7 +121,11 @@ fun MapView(
             listState = listState,
             onSelectedShopChange = onSelectedShopChange,
             onIsFavorite = onIsFavorite,
-            onFavoriteToggled = onFavoriteToggled
+            onFavoriteToggled = onFavoriteToggled,
+            isBarVisible = isBarVisible,
+            onBarVisibleChange = {
+                isBarVisible = it
+            }
         )
     }
 }
@@ -124,6 +135,7 @@ fun Map(
     cameraPositionState: CameraPositionState,
     viewState: RestaurantViewState.Success,
     selectedShop: ShopSummary?,
+    onBarVisibleChange: (Boolean) -> Unit,
     onSelectedShopChange: (ShopSummary) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -165,6 +177,7 @@ fun Map(
                             R.drawable.ic_food_location
                     ),
                     onClick = { marker ->
+                        onBarVisibleChange(true)
                         onSelectedShopChange(viewState.shopList.first { it.id == marker.tag })
                         false
                     },
@@ -250,6 +263,8 @@ fun FloatList(
     shops: List<ShopSummary>,
     selectedShop: ShopSummary?,
     listState: LazyListState,
+    isBarVisible: Boolean,
+    onBarVisibleChange: (Boolean) -> Unit,
     onSelectedShopChange: (ShopSummary) -> Unit,
     onNavDetail: (id: String) -> Unit,
     onFavoriteToggled: (id: String) -> Unit,
@@ -290,7 +305,6 @@ fun FloatList(
     val snappingLayout = remember { SnapLayoutInfoProvider(listState) }
     val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
 
-    var isBarVisible by remember { mutableStateOf(true) }
     AnimatedVisibility(
         modifier = modifier,
         visible = isBarVisible,
@@ -303,7 +317,9 @@ fun FloatList(
                 .pointerInput(Unit) {
                     detectVerticalDragGestures(
                         onVerticalDrag = { _, dragAmount ->
-                            if (dragAmount > 30) isBarVisible = false
+                            if (dragAmount > 30) {
+                                onBarVisibleChange(false)
+                            }
                         }
                     )
                 }
@@ -329,6 +345,16 @@ fun FloatList(
                     )
                 }
             }
+
+            Spacer(
+                modifier = Modifier
+                    .width(28.dp)
+                    .padding(top = 4.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(color = Color(0x33000000))
+                    .align(Alignment.TopCenter)
+            )
 
             val scope = rememberCoroutineScope()
             LaunchedEffect(currentIndex) {
