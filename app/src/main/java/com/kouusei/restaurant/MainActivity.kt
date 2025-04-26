@@ -472,7 +472,8 @@ fun HomeScreen(
     val cameraPositionState by restaurantViewModel.cameraPositionState.collectAsState()
     val selectedShop by restaurantViewModel.selectedShop.collectAsState()
 
-    val listState = rememberLazyListState()
+    val mapViewListState = rememberLazyListState()
+    val filterListState = rememberLazyListState()
 
     when (state) {
         is RestaurantViewState.Error -> {
@@ -495,7 +496,8 @@ fun HomeScreen(
                     selectedDistance = distanceRange,
                     selectedOrderMethod = orderMethod,
                     state = searchFilters,
-                    keyword = keyword
+                    keyword = keyword,
+                    listState = filterListState
                 )
                 if (markerType == List) {
                     RestaurantList(
@@ -516,7 +518,7 @@ fun HomeScreen(
                 } else if (markerType == Map) {
                     MapView(
                         cameraPositionState = cameraPositionState,
-                        listState = listState,
+                        listState = mapViewListState,
                         viewState = state as RestaurantViewState.Success,
                         selectedShop = selectedShop,
                         onSelectedShopChange = {

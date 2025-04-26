@@ -98,6 +98,38 @@ class RestaurantViewModel @Inject constructor(
                 Filter.Filter_PrivateRoom -> _searchFilters.value.copy(
                     private_room = !searchFilters.value.private_room
                 )
+
+                Filter.Filter_Wifi -> _searchFilters.value.copy(
+                    wifi = !searchFilters.value.wifi
+                )
+
+                Filter.Filter_Course -> _searchFilters.value.copy(
+                    course = !searchFilters.value.course
+                )
+
+                Filter.Filter_Card -> _searchFilters.value.copy(
+                    card = !searchFilters.value.card
+                )
+
+                Filter.Filter_Non_Smoking -> _searchFilters.value.copy(
+                    nonSmoking = !searchFilters.value.nonSmoking
+                )
+
+                Filter.Filter_Parking -> _searchFilters.value.copy(
+                    parking = !searchFilters.value.parking
+                )
+
+                Filter.Filter_Lunch -> _searchFilters.value.copy(
+                    lunch = !searchFilters.value.lunch
+                )
+
+                Filter.Filter_English -> _searchFilters.value.copy(
+                    english = !searchFilters.value.english
+                )
+
+                Filter.Filter_Pet -> _searchFilters.value.copy(
+                    pet = !searchFilters.value.pet
+                )
             }
         reloadShopList()
     }

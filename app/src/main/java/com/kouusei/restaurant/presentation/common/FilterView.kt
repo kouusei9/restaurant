@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,7 +60,16 @@ enum class OrderMethod(val value: Int, val description: String) {
 enum class Filter(val value: String, val description: String) {
     Filter_FreeDrink("free_drink", "飲み放題"),
     Filter_FreeFood("free_food", "食べ放題"),
-    Filter_PrivateRoom("private_room", "個室あり");
+    Filter_PrivateRoom("private_room", "個室あり"),
+    Filter_Wifi("wifi", "Wifi"),
+    Filter_Course("course", "コース"),
+    Filter_Card("card", "カード"),
+    Filter_Non_Smoking("non_smoking", "禁煙"),
+    Filter_Parking("parking", "駐車場"),
+    Filter_Lunch("lunch", "ランチ"),
+    Filter_English("english", "English"),
+    Filter_Pet("pet", "ペット")
+    ;
 }
 
 @Composable
@@ -71,9 +81,11 @@ fun FilterView(
     onFilterChange: (Filter) -> Unit,
     selectedDistance: DistanceRange,
     state: SearchFilters,
-    keyword: String
+    keyword: String,
+    listState: LazyListState
 ) {
     LazyRow(
+        state = listState,
         modifier = Modifier
             .padding(start = 8.dp, end = 8.dp)
             .fillMaxWidth()
