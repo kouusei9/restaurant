@@ -44,7 +44,12 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 import com.kouusei.restaurant.ErrorScreen
 import com.kouusei.restaurant.R
 import com.kouusei.restaurant.presentation.entities.ShopDetail
@@ -212,10 +217,27 @@ fun ShopDetailView(
                     )
                 }
             }
+            val cameraPositionState = rememberCameraPositionState {}
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(shopDetail.location, 16f)
             CustomColumn {
                 CustomTitle(text = stringResource(R.string.title_access))
                 CustomDivider()
                 CustomText(text = shopDetail.access)
+
+                GoogleMap(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    cameraPositionState = cameraPositionState,
+                ) {
+                    Marker(
+                        state = MarkerState(position = shopDetail.location),
+                        onClick = { marker ->
+                            false
+                        },
+                    )
+
+                }
             }
 
             CustomColumn {
