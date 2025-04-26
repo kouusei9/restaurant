@@ -1,5 +1,6 @@
 package com.kouusei.restaurant.presentation.mapview
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -53,7 +55,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.CameraPositionState
@@ -69,36 +70,72 @@ import com.kouusei.restaurant.presentation.listview.RestaurantItemBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlin.math.abs
 
 val TAG = "MapView"
 
 @Composable
 fun MapView(
+    listState: LazyListState,
+    cameraPositionState: CameraPositionState,
     viewState: RestaurantViewState.Success,
+    selectedShop: ShopSummary?,
+    onSelectedShopChange: (ShopSummary) -> Unit,
     onNavDetail: (id: String) -> Unit
 ) {
-    val center = viewState.boundingBox.center
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(center, 30f)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.background)
+    ) {
+        Map(
+            cameraPositionState,
+            viewState = viewState,
+            selectedShop = selectedShop,
+            onSelectedShopChange = onSelectedShopChange
+        )
+
+        FloatingPositionButton(
+            modifier = Modifier.align(Alignment.BottomEnd),
+            cameraPositionState = cameraPositionState
+        )
+
+        FloatList(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .align(Alignment.BottomCenter),
+            shops = viewState.shopList,
+            onNavDetail = onNavDetail,
+            selectedShop = selectedShop,
+            listState = listState,
+            onSelectedShopChange = onSelectedShopChange
+        )
     }
+}
+
+@Composable
+fun Map(
+    cameraPositionState: CameraPositionState,
+    viewState: RestaurantViewState.Success,
+    selectedShop: ShopSummary?,
+    onSelectedShopChange: (ShopSummary) -> Unit,
+) {
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(key1 = viewState.boundingBox) {
-        zoomAll(scope, cameraPositionState, viewState.boundingBox)
+    LaunchedEffect(viewState.boundingBox) {
+        Log.d(TAG, "MapView: zoom all")
+        scope.launch {
+            zoomAll(scope, cameraPositionState, viewState.boundingBox)
+        }
     }
 
-    val selectedShop = remember { mutableStateOf(viewState.shopList.firstOrNull()) }
-
-    LaunchedEffect(viewState.shopList) {
-        selectedShop.value = viewState.shopList.firstOrNull()
-    }
-
-    LaunchedEffect(selectedShop.value) {
-        selectedShop.value?.let { shop ->
-            cameraPositionState.animate(
-                update = CameraUpdateFactory.newLatLngZoom(shop.location, 16f),
-                durationMs = 500
-            )
+    LaunchedEffect(selectedShop) {
+        selectedShop?.let { shop ->
+            scope.launch {
+                cameraPositionState.animate(
+                    update = CameraUpdateFactory.newLatLngZoom(shop.location, 16f),
+                )
+            }
         }
     }
 
@@ -118,36 +155,19 @@ fun MapView(
                     state = MarkerState(position = shop.location),
                     tag = shop.id,
                     icon = bitmapDescriptorFromVector(
-                        if (selectedShop.value?.id == shop.id)
+                        if (selectedShop?.id == shop.id)
                             R.drawable.ic_food_location_selected
                         else
                             R.drawable.ic_food_location
                     ),
                     onClick = { marker ->
-                        selectedShop.value = viewState.shopList.first { it.id == marker.tag }
+                        onSelectedShopChange(viewState.shopList.first { it.id == marker.tag })
                         false
-                    }
+                    },
+                    zIndex = if (selectedShop?.id == shop.id) 1.0f else 0.0f
                 )
             }
         }
-
-        FloatingPositionButton(
-            modifier = Modifier.align(Alignment.BottomEnd),
-            cameraPositionState = cameraPositionState
-        )
-
-        FloatList(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .align(Alignment.BottomCenter),
-            shops = viewState.shopList,
-            onNavDetail = onNavDetail,
-            selectedShop = selectedShop.value,
-            onSelectedShopChange = {
-                selectedShop.value = it
-            }
-        )
     }
 }
 
@@ -169,7 +189,7 @@ fun FloatingPositionButton(
                 coroutineScope.launch {
                     val permissionState = ContextCompat.checkSelfPermission(
                         context,
-                        android.Manifest.permission.ACCESS_FINE_LOCATION
+                        Manifest.permission.ACCESS_FINE_LOCATION
                     )
                     if (permissionState == PackageManager.PERMISSION_GRANTED) {
                         try {
@@ -179,7 +199,7 @@ fun FloatingPositionButton(
                             location?.let {
                                 val latLng = LatLng(it.latitude, it.longitude)
                                 cameraPositionState.animate(
-                                    update = CameraUpdateFactory.newLatLngZoom(latLng, 16f),
+                                    update = CameraUpdateFactory.newLatLngZoom(latLng, 30f),
                                     durationMs = 1000
                                 )
                             }
@@ -225,11 +245,10 @@ fun FloatList(
     modifier: Modifier,
     shops: List<ShopSummary>,
     selectedShop: ShopSummary?,
+    listState: LazyListState,
     onSelectedShopChange: (ShopSummary) -> Unit,
     onNavDetail: (id: String) -> Unit
 ) {
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = 0)
-
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val padding = screenWidth * 0.05f
     val itemWidth = screenWidth * 0.9f
@@ -246,7 +265,7 @@ fun FloatList(
             val layoutInfo = listState.layoutInfo
             layoutInfo.visibleItemsInfo.minByOrNull { item ->
                 val center = item.offset + item.size / 2
-                kotlin.math.abs(center - screenCenter)
+                abs(center - screenCenter)
             }?.index ?: 0
         }
     }
@@ -255,6 +274,7 @@ fun FloatList(
         if (selectedShop != null) {
             val index = shops.indexOf(selectedShop)
             if (index >= 0) {
+                Log.d(TAG, "FloatList: scroll to item $index")
                 listState.scrollToItem(index)
             }
         }
@@ -324,8 +344,8 @@ fun zoomAll(
 ) {
     scope.launch {
         cameraPositionState.animate(
-            update = CameraUpdateFactory.newLatLngBounds(boundingBox, 64),
-            durationMs = 500
+            update = CameraUpdateFactory.newLatLngBounds(boundingBox, 30),
+            durationMs = 100
         )
     }
 }
@@ -334,6 +354,7 @@ fun zoomAll(
 @Composable
 fun MapViewPreview(
 ) {
+    val cameraPositionState = rememberCameraPositionState()
     MapView(
         viewState = RestaurantViewState.Success(
             shopList = listOf(
@@ -356,6 +377,10 @@ fun MapViewPreview(
             ),
             boundingBox = LatLngBounds(LatLng(1.0, 1.0), LatLng(1.0, 1.0)),
             totalSize = 10,
-        )
+        ),
+        cameraPositionState = cameraPositionState,
+        listState = rememberLazyListState(),
+        selectedShop = null,
+        onSelectedShopChange = { }
     ) { }
 }

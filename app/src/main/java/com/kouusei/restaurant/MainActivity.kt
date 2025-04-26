@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -165,7 +166,8 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     bottomBar = {
-                        AnimatedVisibility(visible = currentRoute in topRoutes,
+                        AnimatedVisibility(
+                            visible = currentRoute in topRoutes,
                             enter =
                             fadeIn(
                                 animationSpec = tween(
@@ -177,7 +179,8 @@ class MainActivity : ComponentActivity() {
                                 animationSpec = tween(
                                     300, easing = LinearEasing
                                 )
-                            )) {
+                            )
+                        ) {
                             BottomNav(
                                 nav = navController,
                             )
@@ -427,6 +430,11 @@ fun HomeScreen(
     val isLoading by restaurantViewModel.isLoading.collectAsState()
     val isReachEnd by restaurantViewModel.isReachEnd.collectAsState()
 
+    val cameraPositionState by restaurantViewModel.cameraPositionState.collectAsState()
+    val selectedShop by restaurantViewModel.selectedShop.collectAsState()
+
+    val listState = rememberLazyListState()
+
     when (state) {
         is RestaurantViewState.Error -> {
             ErrorScreen((state as RestaurantViewState.Error).message)
@@ -463,7 +471,14 @@ fun HomeScreen(
                         isReachEnd = isReachEnd
                     )
                 } else if (markerType == Map) {
-                    MapView(viewState = state as RestaurantViewState.Success,
+                    MapView(
+                        cameraPositionState = cameraPositionState,
+                        listState = listState,
+                        viewState = state as RestaurantViewState.Success,
+                        selectedShop = selectedShop,
+                        onSelectedShopChange = {
+                            restaurantViewModel.onSelectedShopChange(it)
+                        },
                         onNavDetail = {
                             nav.navigate(route = Detail(id = it).route)
                         })

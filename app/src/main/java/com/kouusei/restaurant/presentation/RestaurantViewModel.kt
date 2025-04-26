@@ -3,7 +3,9 @@ package com.kouusei.restaurant.presentation
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
 import com.kouusei.restaurant.data.api.HotPepperGourmetRepository
 import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.utils.ApiResult
@@ -56,6 +58,11 @@ class RestaurantViewModel @Inject constructor(
     private val _isReachEnd = MutableStateFlow<Boolean>(false)
     val isReachEnd: StateFlow<Boolean> = _isReachEnd.asStateFlow()
 
+    private val _cameraPositionState = MutableStateFlow<CameraPositionState>(CameraPositionState())
+    val cameraPositionState: StateFlow<CameraPositionState> = _cameraPositionState.asStateFlow()
+    private val _selectedShop = MutableStateFlow<ShopSummary?>(null)
+    val selectedShop: StateFlow<ShopSummary?> = _selectedShop.asStateFlow()
+
     init {
 
     }
@@ -71,6 +78,10 @@ class RestaurantViewModel @Inject constructor(
     fun onOrderMethodChange(method: OrderMethod) {
         _orderMethod.value = method
         reloadShopList()
+    }
+
+    fun onSelectedShopChange(shop: ShopSummary) {
+        _selectedShop.value = shop
     }
 
     fun toggleFilter(filter: Filter) {
@@ -146,6 +157,7 @@ class RestaurantViewModel @Inject constructor(
                         boundingBox = boundingBox,
                         result.data.results_available
                     )
+                _selectedShop.value = shopList.firstOrNull()
             }
         }
     }
@@ -310,6 +322,12 @@ class RestaurantViewModel @Inject constructor(
     fun permissionSuccess(location: LatLng) {
         _restaurantViewState.value = RestaurantViewState.Loading
         _location = location
+
+        // set camera when get location
+        _cameraPositionState.value = CameraPositionState().apply {
+            position = CameraPosition.fromLatLngZoom(_location!!, 16f)
+        }
+
         Log.d(TAG, "permissionSuccess: location: $_location")
         viewModelScope.launch {
             reloadShopList()
