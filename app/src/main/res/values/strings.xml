@@ -6,4 +6,34 @@
     <string name="save_list">保存リスト</string>
 
     <string name="total_count">%d件</string>
+    <string name="search">探す</string>
+    <string name="permission_deny">位置情報へのアクセスを許可してください。</string>
+
+    <!--    ListView -->
+    <string name="last_item">最後</string>
+
+    <!--    DetailView-->
+    <string name="detail_card">カード</string>
+    <string name="title_open">営業時間</string>
+    <string name="title_close">閉店時間</string>
+    <string name="title_menu">メニュー</string>
+    <string name="detail_course">コース</string>
+    <string name="detail_free_food">食べ放題</string>
+    <string name="detail_free_drink">飲み放題</string>
+    <string name="detail_launch">Launch</string>
+    <string name="detail_english">English</string>
+    <string name="detail_pet">ペット</string>
+
+    <string name="title_access">アクセス</string>
+
+    <string name="title_equipment">席・設備</string>
+    <string name="detail_private_room">個室</string>
+    <string name="detail_no_smoking">禁煙</string>
+    <string name="detail_horigotatsu">掘りごたつ</string>
+    <string name="detail_parking">駐車場</string>
+    <string name="detail_barrier_free">バリアフリ</string>
+    <string name="detail_wifi">WIFI</string>
+
+    <string name="title_related">特徴・関連情報</string>
+    <string name="detail_child">お子様連れ</string>
 </resources>

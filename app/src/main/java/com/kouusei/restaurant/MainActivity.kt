@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -67,6 +68,7 @@ import com.kouusei.restaurant.presentation.common.FilterView
 import com.kouusei.restaurant.presentation.detailview.DetailView
 import com.kouusei.restaurant.presentation.listview.RestaurantList
 import com.kouusei.restaurant.presentation.mapview.MapView
+import com.kouusei.restaurant.presentation.utils.toLatLng
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -297,6 +299,7 @@ fun LocationHandler(
         )
     }
 
+    val permissionDenyInfo = stringResource(R.string.permission_deny)
     // request permission Launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -308,7 +311,7 @@ fun LocationHandler(
                 onSuccess = onSuccess, onFailed = onFailed
             )
         } else {
-            locationText = "Permission Denied"
+            locationText = permissionDenyInfo
         }
     }
 
@@ -322,14 +325,14 @@ fun LocationHandler(
         }
     }
 
-    // 注册 Location Callback
+    // register Location Callback
     val locationCallback = remember {
         object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val location = result.lastLocation
                 if (location != null) {
                     locationText = "Lat: ${location.latitude}, Lon: ${location.longitude}"
-                    onSuccess(LatLng(location.latitude, location.longitude))
+                    onSuccess(location.toLatLng())
                 } else {
                     onFailed("Location not found")
                 }
@@ -360,7 +363,7 @@ fun LocationHandler(
         }
     }
 
-    //TODO move text to string xml.
+    //TODO request shop info
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -369,7 +372,7 @@ fun LocationHandler(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (hasPermission) {
-            Text(text = locationText ?: "Loading location...")
+            Text(text = locationText ?: "Loading...")
         } else {
             Button(onClick = {
                 permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)

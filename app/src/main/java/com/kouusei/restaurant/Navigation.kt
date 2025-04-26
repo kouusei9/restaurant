@@ -44,12 +44,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlin.collections.List
 
+/**
+ * Detail view Top Bar
+ * title: detail's title.
+ * nav back: pop back action.
+ */
 @Composable
 fun DetailTopBar(
     title: String,
@@ -81,6 +87,7 @@ fun DetailTopBar(
             modifier = Modifier
                 .align(Alignment.Center)
                 .fillMaxWidth(0.6f),
+            textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onPrimary
         )
     }
@@ -107,14 +114,13 @@ fun RestaurantTopBar(
             onQueryChange = onKeywordChange,
             onSearch = {
                 onSearch()
-                active = false // 关闭搜索框
+                active = false
             },
             active = active,
             onActiveChange = { active = it },
-            // TODO string
-            placeholder = { Text("探す") },
+            placeholder = { Text(text = stringResource(R.string.search)) },
             leadingIcon = {
-                Icon(Icons.Default.Search, contentDescription = null)
+                Icon(Icons.Default.Search, contentDescription = "search icon")
             },
             trailingIcon = {
                 Row {

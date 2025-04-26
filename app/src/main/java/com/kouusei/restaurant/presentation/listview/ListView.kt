@@ -100,7 +100,7 @@ fun RestaurantList(
             .background(MaterialTheme.colorScheme.background)
     ) {
         if (shops.isNotEmpty()) {
-            item() {
+            item {
                 Text(
                     text = stringResource(R.string.total_count, restaurantViewState.totalSize),
                     color = MaterialTheme.colorScheme.primary
@@ -117,7 +117,7 @@ fun RestaurantList(
 
         item {
             if (isReachEnd) {
-                Text(text = "最後")
+                Text(text = stringResource(R.string.last_item))
             } else {
                 CircularProgressIndicator(
                     modifier = Modifier
@@ -139,7 +139,6 @@ fun RestaurantItemBar(
     // TODO move color to theme
     Row(
         modifier = modifier
-//            .fillMaxWidth()
             .padding(top = 4.dp, bottom = 4.dp)
             .height(120.dp)
             .shadow(

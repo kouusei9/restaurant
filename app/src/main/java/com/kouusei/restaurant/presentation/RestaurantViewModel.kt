@@ -231,6 +231,9 @@ class RestaurantViewModel @Inject constructor(
      * set range to default 1000m, and search
      * 3. keyword is empty, range is selected
      * search with range
+     *
+     * keyword have,
+     * location have, how to ?
      */
     suspend fun loadShopListByKeywordAndLocation(
         keyword: String,

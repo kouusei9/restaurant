@@ -67,6 +67,7 @@ import com.kouusei.restaurant.R
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.presentation.listview.RestaurantItemBar
+import com.kouusei.restaurant.presentation.utils.toLatLng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -123,7 +124,6 @@ fun Map(
 ) {
     val scope = rememberCoroutineScope()
     LaunchedEffect(viewState.boundingBox) {
-        Log.d(TAG, "MapView: zoom all")
         scope.launch {
             zoomAll(scope, cameraPositionState, viewState.boundingBox)
         }
@@ -197,9 +197,8 @@ fun FloatingPositionButton(
                                 LocationServices.getFusedLocationProviderClient(context)
                             val location = locationProvider.lastLocation.await()
                             location?.let {
-                                val latLng = LatLng(it.latitude, it.longitude)
                                 cameraPositionState.animate(
-                                    update = CameraUpdateFactory.newLatLngZoom(latLng, 30f),
+                                    update = CameraUpdateFactory.newLatLngZoom(it.toLatLng(), 30f),
                                     durationMs = 1000
                                 )
                             }
@@ -220,6 +219,7 @@ fun FloatingPositionButton(
                 .padding(8.dp)
                 .clip(CircleShape)
         ) {
+            // TODO change icon.
             Icon(Icons.Default.Place, contentDescription = "Go to my location")
         }
     }
@@ -280,7 +280,7 @@ fun FloatList(
         }
     }
 
-    // 使用snap行为实现吸附效果
+    // snap
     val snappingLayout = remember { SnapLayoutInfoProvider(listState) }
     val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
 
