@@ -108,6 +108,13 @@ fun LoadingScreenPreview() {
 }
 
 @Composable
-fun EmptyScreen() {
+fun ErrorScreen(errorStr: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = errorStr)
+    }
+}
 
 }

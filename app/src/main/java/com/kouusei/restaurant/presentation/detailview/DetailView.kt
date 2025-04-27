@@ -50,8 +50,8 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.kouusei.restaurant.ErrorScreen
 import com.kouusei.restaurant.R
+import com.kouusei.restaurant.presentation.ErrorScreen
 import com.kouusei.restaurant.presentation.LoadingScreen
 import com.kouusei.restaurant.presentation.entities.ShopDetail
 import com.kouusei.restaurant.presentation.listview.debugPlaceholder
@@ -108,6 +108,8 @@ fun ShopDetailView(
                 .verticalScroll(scrollState)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
