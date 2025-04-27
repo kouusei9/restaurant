@@ -30,6 +30,7 @@ class DetailViewModel @Inject constructor(
     }
 
     fun load(id: String) {
+        _title.value = ""
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val result = hotPepperGourmetRepository.shopDetailById(id)

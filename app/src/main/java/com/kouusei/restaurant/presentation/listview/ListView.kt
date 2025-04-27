@@ -24,7 +24,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -56,6 +57,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.kouusei.restaurant.R
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.entities.ShopSummary
+import com.kouusei.restaurant.presentation.utils.ZigzagDivider
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
@@ -69,6 +71,7 @@ fun RestaurantList(
     isLoadingMore: Boolean,
     isReachEnd: Boolean,
     isReloading: Boolean,
+    listState: LazyListState,
     onLoadMore: () -> Unit,
     onNavDetail: (id: String) -> Unit,
     onIsFavorite: (id: String) -> Boolean,
@@ -76,9 +79,7 @@ fun RestaurantList(
 ) {
     val TAG = "ListView"
     Log.d(TAG, "RestaurantList: Enter, isLoadingMore: $isLoadingMore, isReachEnd: $isReachEnd")
-    val listState = rememberLazyListState()
     val shops = restaurantViewState.shopList
-
     LaunchedEffect(Unit) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo }
             .map { visibleItems ->
@@ -122,15 +123,15 @@ fun RestaurantList(
                 )
             }
         }
-        items(shops, key = { it.id }) {
+        itemsIndexed(shops) { index, shop ->
             if (isReloading) {
                 RestaurantItemBarLoading()
             } else {
                 RestaurantItemBar(
                     modifier = Modifier.fillMaxWidth(),
-                    shop = it,
+                    shop = shop,
                     onNavDetail = onNavDetail,
-                    isLike = onIsFavorite(it.id),
+                    isLike = onIsFavorite(shop.id),
                     onLoveToggled = onFavoriteToggled
                 )
             }
@@ -138,7 +139,13 @@ fun RestaurantList(
 
         item {
             if (isReachEnd) {
-                Text(text = stringResource(R.string.last_item))
+                ZigzagDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(20.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowColor = MaterialTheme.colorScheme.primary
+                )
             } else {
                 RestaurantItemBarLoading()
             }
@@ -385,10 +392,11 @@ fun RestaurantListPreview() {
             onNavDetail = {},
             onLoadMore = {},
             isLoadingMore = true,
-            isReachEnd = false,
+            isReachEnd = true,
             onIsFavorite = { false },
             onFavoriteToggled = {},
-            isReloading = false
+            isReloading = false,
+            listState = rememberLazyListState()
         )
     }
 }

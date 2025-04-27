@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -137,20 +140,25 @@ fun RestaurantTopBar(
                 }
             },
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
         ) {
-            suggestions.filter { it.isNotEmpty() }.forEach { suggestion ->
-                ListItem(
-                    headlineContent = { Text(suggestion) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            onKeywordChange(suggestion)
-                            onSearch()
-                            active = false
-                        }
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(suggestions, key = { it }) {
+                    ListItem(
+                        headlineContent = { Text(it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onKeywordChange(it)
+                                onSearch()
+                                active = false
+                            }
+                            .padding(horizontal = 16.dp)
+                    )
+                }
             }
         }
 
