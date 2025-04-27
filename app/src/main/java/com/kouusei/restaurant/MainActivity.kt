@@ -383,6 +383,9 @@ fun AppNavGraph(
                             listState = listViewListState,
                             onFavoriteToggled = {
                                 favoriteShopsModel.toggleFavorite(it)
+                            },
+                            onRefresh = {
+                                restaurantViewModel.reloadShopList()
                             }
                         )
 

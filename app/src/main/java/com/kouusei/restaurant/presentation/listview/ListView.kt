@@ -31,9 +31,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
@@ -65,6 +67,7 @@ import kotlinx.coroutines.flow.map
 
 const val TAG = "ListView"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RestaurantList(
     restaurantViewState: RestaurantViewState.Success,
@@ -77,6 +80,7 @@ fun RestaurantList(
     onNavDetail: (id: String) -> Unit,
     onIsFavorite: (id: String) -> Boolean,
     onFavoriteToggled: (id: String) -> Unit,
+    onRefresh: () -> Unit
 ) {
     Log.d(TAG, "RestaurantList: Enter, isLoadingMore: $isLoadingMore, isReachEnd: $isReachEnd")
     val shops = restaurantViewState.shopList
@@ -106,46 +110,53 @@ fun RestaurantList(
             }
     }
 
-    LazyColumn(
-        state = listState,
-        modifier = modifier
-            .fillMaxSize()
-            .padding(start = 10.dp, end = 10.dp)
-            .background(MaterialTheme.colorScheme.background)
+    PullToRefreshBox(
+        isRefreshing = isReloading,
+        onRefresh = {
+            onRefresh()
+        }
     ) {
-        if (shops.isNotEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.total_count, restaurantViewState.totalSize),
-                    color = MaterialTheme.colorScheme.primary
-                )
+        LazyColumn(
+            state = listState,
+            modifier = modifier
+                .fillMaxSize()
+                .padding(start = 10.dp, end = 10.dp)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            if (shops.isNotEmpty()) {
+                item {
+                    Text(
+                        text = stringResource(R.string.total_count, restaurantViewState.totalSize),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
-        }
-        itemsIndexed(shops) { index, shop ->
-            if (isReloading) {
-                RestaurantItemBarLoading()
-            } else {
-                RestaurantItemBar(
-                    modifier = Modifier.fillMaxWidth(),
-                    shop = shop,
-                    onNavDetail = onNavDetail,
-                    isLike = onIsFavorite(shop.id),
-                    onLoveToggled = onFavoriteToggled
-                )
+            itemsIndexed(shops) { index, shop ->
+                if (isReloading) {
+                    RestaurantItemBarLoading()
+                } else {
+                    RestaurantItemBar(
+                        modifier = Modifier.fillMaxWidth(),
+                        shop = shop,
+                        onNavDetail = onNavDetail,
+                        isLike = onIsFavorite(shop.id),
+                        onLoveToggled = onFavoriteToggled
+                    )
+                }
             }
-        }
 
-        item {
-            if (isReachEnd) {
-                ZigzagDivider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(20.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowColor = MaterialTheme.colorScheme.primary
-                )
-            } else {
-                RestaurantItemBarLoading()
+            item {
+                if (isReachEnd) {
+                    ZigzagDivider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(20.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        shadowColor = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    RestaurantItemBarLoading()
+                }
             }
         }
     }
@@ -394,7 +405,8 @@ fun RestaurantListPreview() {
             onIsFavorite = { false },
             onFavoriteToggled = {},
             isReloading = false,
-            listState = rememberLazyListState()
+            listState = rememberLazyListState(),
+            onRefresh = {}
         )
     }
 }
