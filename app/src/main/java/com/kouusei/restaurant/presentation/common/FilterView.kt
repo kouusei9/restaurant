@@ -268,7 +268,7 @@ fun FilterChip(
         onClick = onClick,
         shape = RoundedCornerShape(50),
         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
         modifier = Modifier
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .height(30.dp)
