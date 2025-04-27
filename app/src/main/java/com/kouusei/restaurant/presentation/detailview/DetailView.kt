@@ -52,6 +52,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.kouusei.restaurant.ErrorScreen
 import com.kouusei.restaurant.R
+import com.kouusei.restaurant.presentation.LoadingScreen
 import com.kouusei.restaurant.presentation.entities.ShopDetail
 import com.kouusei.restaurant.presentation.listview.debugPlaceholder
 import com.kouusei.restaurant.presentation.utils.splitBusinessHours
@@ -78,12 +79,7 @@ fun DetailView(
         }
 
         DetailViewState.Loading -> {
-            Box(
-                modifier = modifier,
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "Loading")
-            }
+            LoadingScreen()
         }
 
         is DetailViewState.Success -> {
@@ -291,6 +287,7 @@ fun ShopDetailView(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(8.dp)
+                .shadow(elevation = 10.dp, shape = CircleShape)
                 .clip(CircleShape)
         ) {
             if (onIsFavorite(shopDetail.id)) {

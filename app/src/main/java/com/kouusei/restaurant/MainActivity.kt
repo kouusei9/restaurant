@@ -61,6 +61,7 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
+import com.kouusei.restaurant.presentation.LoadingScreen
 import com.kouusei.restaurant.presentation.RestaurantViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.common.FilterView
@@ -397,25 +398,22 @@ fun LocationHandler(
         }
     }
 
-    //TODO request shop info
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (hasPermission) {
-            Text(text = locationText ?: "Loading...")
-        } else {
+    if (hasPermission) {
+        LoadingScreen(infiniteTransition)
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Button(onClick = {
                 permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }) {
                 Text("Request Location Permission")
             }
-
             Spacer(modifier = Modifier.height(20.dp))
-
             Text(text = locationText ?: "Permission not granted yet")
         }
     }

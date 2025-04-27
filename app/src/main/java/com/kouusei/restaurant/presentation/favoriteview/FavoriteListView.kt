@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kouusei.restaurant.ErrorScreen
-import com.kouusei.restaurant.LoadingScreen
+import com.kouusei.restaurant.presentation.LoadingScreen
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.presentation.listview.RestaurantItemBar
 
