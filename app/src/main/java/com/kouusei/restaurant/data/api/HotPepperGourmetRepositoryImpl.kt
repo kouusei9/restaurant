@@ -4,19 +4,20 @@ import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.api.entities.ShopName
 import com.kouusei.restaurant.data.utils.ApiResult
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
-val TAG = "HotPepperGourmetRepositoryImpl"
+const val TAG = "HotPepperGourmetRepositoryImpl"
 
 class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService: HotPepperGourmetService) :
     HotPepperGourmetRepository {
 
     companion object ErrorCode {
         // internal error
-        const val internalError: Int = 100
+        const val INTERNALERROR: Int = 100
 
         // Not Found
-        const val notFoundError: Int = 404
+        const val NOTFOUNDERROR: Int = 404
     }
 
     override suspend fun searchShops(
@@ -29,6 +30,7 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
         genre: String?,
         filters: Map<String, String>
     ): ApiResult<Results> {
+        delay(500)
         return try {
             val response =
                 apiService.gourmetSearch(
@@ -50,7 +52,7 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                 ApiResult.Success(response.results)
             }
         } catch (e: Exception) {
-            ApiResult.Error(code = internalError, message = e.message ?: "Unknown error")
+            ApiResult.Error(code = INTERNALERROR, message = e.message ?: "Unknown error")
         }
     }
 
@@ -66,7 +68,7 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                 ApiResult.Success(response.results.shop)
             }
         } catch (e: Exception) {
-            ApiResult.Error(code = internalError, e.message ?: "Unknown error")
+            ApiResult.Error(code = INTERNALERROR, e.message ?: "Unknown error")
         }
     }
 
@@ -81,13 +83,13 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                 )
             } else {
                 if (response.results.shop.isEmpty()) {
-                    ApiResult.Error(code = notFoundError, message = "Not Found")
+                    ApiResult.Error(code = NOTFOUNDERROR, message = "Not Found")
                 } else {
-                    ApiResult.Success(response.results.shop.get(0))
+                    ApiResult.Success(response.results.shop[0])
                 }
             }
         } catch (e: Exception) {
-            ApiResult.Error(code = internalError, e.message ?: "Unknown error")
+            ApiResult.Error(code = INTERNALERROR, e.message ?: "Unknown error")
         }
     }
 
@@ -102,13 +104,13 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                 )
             } else {
                 if (response.results.shop.isEmpty()) {
-                    ApiResult.Error(code = notFoundError, message = "Not Found")
+                    ApiResult.Error(code = NOTFOUNDERROR, message = "Not Found")
                 } else {
                     ApiResult.Success(response.results.shop)
                 }
             }
         } catch (e: Exception) {
-            ApiResult.Error(code = internalError, e.message ?: "Unknown error")
+            ApiResult.Error(code = INTERNALERROR, e.message ?: "Unknown error")
         }
     }
 }

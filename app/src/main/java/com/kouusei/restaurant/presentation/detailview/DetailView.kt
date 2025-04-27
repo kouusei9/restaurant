@@ -70,7 +70,7 @@ import com.kouusei.restaurant.presentation.entities.ShopDetail
 import com.kouusei.restaurant.presentation.listview.debugPlaceholder
 import com.kouusei.restaurant.presentation.utils.splitBusinessHours
 
-val TAG = "DetailView"
+const val TAG = "DetailView"
 
 @Composable
 fun DetailView(
@@ -351,7 +351,7 @@ fun CustomBottomSheet(
         sheetState = sheetState
     ) {
         Column(
-            Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {

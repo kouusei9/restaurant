@@ -60,9 +60,10 @@ import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.presentation.utils.ZigzagDivider
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
 import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+
+const val TAG = "ListView"
 
 @Composable
 fun RestaurantList(
@@ -77,7 +78,6 @@ fun RestaurantList(
     onIsFavorite: (id: String) -> Boolean,
     onFavoriteToggled: (id: String) -> Unit,
 ) {
-    val TAG = "ListView"
     Log.d(TAG, "RestaurantList: Enter, isLoadingMore: $isLoadingMore, isReachEnd: $isReachEnd")
     val shops = restaurantViewState.shopList
     LaunchedEffect(Unit) {
@@ -91,8 +91,6 @@ fun RestaurantList(
             }
             // only tack changed one
             .distinctUntilChanged()
-            // add wait time
-            .debounce(300)
             //
             .conflate()
             .collect { (lastVisibleItemIndex, totalItems) ->

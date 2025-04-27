@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.kouusei.restaurant.R
 import com.kouusei.restaurant.presentation.entities.SearchFilters
 
-val TAG = "FilterView"
+const val TAG = "FilterView"
 
 enum class DistanceRange(val value: Int, val description: String) {
     RANGE_300M(1, "300m"),
@@ -114,7 +114,6 @@ fun FilterView(
     onFilterChange: (Filter) -> Unit,
     selectedDistance: DistanceRange,
     state: SearchFilters,
-    keyword: String,
     listState: LazyListState
 ) {
     LazyRow(
@@ -128,7 +127,6 @@ fun FilterView(
             Box {
                 DistanceFilterChip(
                     selectedDistance = selectedDistance,
-                    keyword = keyword,
                     onDistanceChange = onDistanceChange
                 )
             }
@@ -210,7 +208,6 @@ fun FilterChipWithDropdownMenu(
 @Composable
 fun DistanceFilterChip(
     selectedDistance: DistanceRange,
-    keyword: String,
     onDistanceChange: (DistanceRange) -> Unit,
 ) {
     var distanceMenuExpanded by remember { mutableStateOf(false) }

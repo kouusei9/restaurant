@@ -55,6 +55,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlin.collections.List
 
+
+const val TAG_NAVIGATION = "BottomNav"
+
 /**
  * Detail view Top Bar
  * title: detail's title.
@@ -180,6 +183,7 @@ fun RestaurantTopBar(
 fun BottomNav(
     nav: NavHostController,
 ) {
+
     var selectedScreen by rememberSaveable {
         mutableStateOf<String>(Map.route)
     }
@@ -188,9 +192,8 @@ fun BottomNav(
         selectedScreen = navBackStackEntry?.destination?.route ?: selectedScreen
     }
 
-    val TAG = "BottomNav"
     LaunchedEffect(selectedScreen) {
-        Log.d(TAG, "BottomNav: $selectedScreen")
+        Log.d(TAG_NAVIGATION, "BottomNav: $selectedScreen")
     }
 
     val topLevelRoutes = listOf(
@@ -220,7 +223,7 @@ fun BottomNav(
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    Log.d(TAG, "BottomNav: Click ${topLevelRoute.route.route}")
+                    Log.d(TAG_NAVIGATION, "BottomNav: Click ${topLevelRoute.route.route}")
                     nav.navigate(topLevelRoute.route.route) {
                         // Pop up to the start destination of the graph to
                         // avoid building up a large stack of destinations
@@ -229,9 +232,9 @@ fun BottomNav(
                             saveState = true
                         }
                         // Avoid multiple copies of the same destination when
-                        // reselecting the same item
+                        // reselect the same item
                         launchSingleTop = true
-                        // Restore state when reselecting a previously selected item
+                        // Restore state when reselect a previously selected item
                         restoreState = true
                     }
                     selectedScreen = topLevelRoute.route.route

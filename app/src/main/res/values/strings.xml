@@ -9,7 +9,7 @@
     <string name="save_list">保存リスト</string>
 
     <string name="total_count">%d件</string>
-    <string name="search">探す</string>
+    <string name="search">お店を探す</string>
 
     <!--    FilterView  -->
     <string name="filter_clear">クリア</string>

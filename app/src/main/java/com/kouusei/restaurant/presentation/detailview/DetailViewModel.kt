@@ -25,10 +25,6 @@ class DetailViewModel @Inject constructor(
     private val _title = MutableStateFlow<String>("")
     val title: StateFlow<String> = _title.asStateFlow()
 
-    init {
-
-    }
-
     fun load(id: String) {
         _title.value = ""
         viewModelScope.launch {

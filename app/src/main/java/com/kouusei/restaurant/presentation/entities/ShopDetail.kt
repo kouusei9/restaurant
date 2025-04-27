@@ -30,5 +30,4 @@ class ShopDetail(
     val parking: String,
     val privateRoom: String,
     val horigotatsu: String
-) {
-}
+)

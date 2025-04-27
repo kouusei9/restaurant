@@ -27,11 +27,12 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.text.isNotEmpty
 
+const val TAG = "RestaurantViewModel"
+
 @HiltViewModel
 class RestaurantViewModel @Inject constructor(
     private val gourmetRepository: HotPepperGourmetRepository
 ) : ViewModel() {
-    val TAG = "RestaurantViewModel"
 
     private val _restaurantViewState =
         MutableStateFlow<RestaurantViewState>(RestaurantViewState.RequestPermission)
@@ -76,10 +77,6 @@ class RestaurantViewModel @Inject constructor(
     private val _selectedShop = MutableStateFlow<ShopSummary?>(null)
     val selectedShop: StateFlow<ShopSummary?> = _selectedShop.asStateFlow()
 
-    init {
-
-    }
-
     private fun resetAllFilters() {
         _searchFilters.value = SearchFilters()
         _distanceRange.value = DistanceRange.RANGE_1000M
@@ -123,15 +120,15 @@ class RestaurantViewModel @Inject constructor(
         _searchFilters.value =
             when (filter) {
                 Filter.Filter_FreeDrink -> _searchFilters.value.copy(
-                    free_drink = !searchFilters.value.free_drink
+                    freeDrink = !searchFilters.value.freeDrink
                 )
 
                 Filter.Filter_FreeFood -> _searchFilters.value.copy(
-                    free_food = !searchFilters.value.free_food
+                    freeFood = !searchFilters.value.freeFood
                 )
 
                 Filter.Filter_PrivateRoom -> _searchFilters.value.copy(
-                    private_room = !searchFilters.value.private_room
+                    privateRoom = !searchFilters.value.privateRoom
                 )
 
                 Filter.Filter_Wifi -> _searchFilters.value.copy(

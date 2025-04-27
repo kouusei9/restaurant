@@ -79,7 +79,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.math.abs
 
-val TAG = "MapView"
+const val TAG = "MapView"
 
 @Composable
 fun MapView(

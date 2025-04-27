@@ -79,7 +79,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-val TAG = "MainActivity"
+const val TAG = "MainActivity"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -255,7 +255,6 @@ fun AppNavGraph(
                             selectedDistance = distanceRange,
                             selectedOrderMethod = orderMethod,
                             state = searchFilters,
-                            keyword = keyword,
                             listState = filterListState,
                             selectedGenre = genre,
                             onSelectedGenreChange = {
@@ -362,7 +361,6 @@ fun AppNavGraph(
                             selectedDistance = distanceRange,
                             selectedOrderMethod = orderMethod,
                             state = searchFilters,
-                            keyword = keyword,
                             listState = filterListState,
                             selectedGenre = genre,
                             onSelectedGenreChange = {
@@ -570,7 +568,7 @@ fun LocationHandler(
                     Looper.getMainLooper()
                 )
             } catch (e: SecurityException) {
-                onFailed("Permission not granted")
+                onFailed("Permission not granted ${e.message}")
             }
         }
 
