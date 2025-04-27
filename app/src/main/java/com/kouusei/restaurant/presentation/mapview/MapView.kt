@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -237,6 +238,7 @@ fun FloatingPositionButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(8.dp)
+                .shadow(elevation = 10.dp, shape = CircleShape)
                 .clip(CircleShape)
         ) {
             Icon(
@@ -393,7 +395,7 @@ fun zoomAll(
 ) {
     scope.launch {
         cameraPositionState.animate(
-            update = CameraUpdateFactory.newLatLngBounds(boundingBox, 16),
+            update = CameraUpdateFactory.newLatLngBounds(boundingBox, 60),
             durationMs = 100
         )
     }
