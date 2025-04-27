@@ -16,7 +16,6 @@
     <string name="filter_genre">ジャンル</string>
 
     <!--    ListView -->
-    <string name="last_item">最後</string>
     <string name="list_empty">未発見の世界へようこそう</string>
     <string name="button_list_reload">絞り込みをリセットして再検索する</string>
 

@@ -173,16 +173,31 @@ class RestaurantViewModel @Inject constructor(
     fun resetFilterAndReload() {
         resetAllFilters()
         _distanceRange.value = DistanceRange.RANGE_NO
-        reloadShopList()
+        reloadShopList { result ->
+            // reset keyword when other filters already reset.
+            if (result is ApiResult.Success && result.data.shop.isEmpty()) {
+                _keyword.value = ""
+                reloadShopList()
+            } else {
+                refreshShopList(result)
+            }
+        }
     }
 
     fun reloadShopList() {
+        reloadShopList {
+            refreshShopList(it)
+        }
+    }
+
+    fun reloadShopList(
+        onResult: (ApiResult<Results>) -> Unit
+    ) {
         // reset is reach end.
         Log.d(TAG, "reloadShopList: Called reload shop list")
         _isReachEnd.value = false
         _isLoading.value = false
         _isReloading.value = true
-//        _restaurantViewState.value = RestaurantViewState.Loading
 
         viewModelScope.launch {
             val order =
@@ -195,7 +210,7 @@ class RestaurantViewModel @Inject constructor(
                     range = distanceRange.value,
                     order = order,
                 ) { result ->
-                    refreshShopList(result)
+                    onResult(result)
                 }
             }
         }
@@ -212,6 +227,7 @@ class RestaurantViewModel @Inject constructor(
             }
 
             is ApiResult.Success -> {
+                Log.d(TAG, "refreshShopList: $result")
                 if (result.data.shop.isEmpty()) {
                     _restaurantViewState.value = RestaurantViewState.Empty
                     _isReloading.value = false
@@ -429,7 +445,7 @@ class RestaurantViewModel @Inject constructor(
 
         Log.d(TAG, "permissionSuccess: location: $_location")
         viewModelScope.launch {
-            reloadShopList()
+            reloadShopList { refreshShopList(it) }
         }
     }
 

@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -127,22 +129,41 @@ fun ErrorScreen(errorStr: String) {
 
 @Composable
 fun EmptyScreen(
+    isShowReload: Boolean = true,
     reload: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick = reload) {
-            Text(text = stringResource(R.string.button_list_reload))
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = stringResource(R.string.list_empty),
-            style = MaterialTheme.typography.bodyMedium
+        Image(
+            modifier = Modifier.size(200.dp),
+            painter = painterResource(R.drawable.empty), contentDescription = null
         )
+
+        if (isShowReload) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(onClick = reload) {
+                Text(text = stringResource(R.string.button_list_reload))
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = stringResource(R.string.list_empty),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
     }
+}
+
+@Preview
+@Composable
+fun EmptyScreenPreview() {
+    EmptyScreen (
+        isShowReload = true
+    ){}
 }
