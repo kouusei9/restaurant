@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">舌上</string>
+    <!--    permission  -->
+    <string name="permission_request">位置情報を許可する</string>
+    <string name="permission_deny">位置情報へのアクセスを許可してください。</string>
 
     <string name="map">地図</string>
     <string name="list">リスト</string>
@@ -7,7 +10,6 @@
 
     <string name="total_count">%d件</string>
     <string name="search">探す</string>
-    <string name="permission_deny">位置情報へのアクセスを許可してください。</string>
 
     <!--    FilterView  -->
     <string name="filter_clear">クリア</string>

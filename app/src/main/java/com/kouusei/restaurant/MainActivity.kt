@@ -428,10 +428,13 @@ fun LocationHandler(
             Button(onClick = {
                 permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }) {
-                Text("Request Location Permission")
+                Text(text = stringResource(R.string.permission_request))
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Text(text = locationText ?: "Permission not granted yet")
+            Text(
+                text = locationText ?: stringResource(R.string.permission_deny),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
