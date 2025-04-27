@@ -7,7 +7,7 @@
 
     <!-- 外部地图标记 -->
     <path
-        android:fillColor="#FFA726"
+        android:fillColor="#fd6f55"
         android:strokeColor="#000000"
         android:strokeWidth="16"
         android:pathData="M256,32c-123.71,0 -224,100.29 -224,224 0,137.84 224,224 224,224s224,-86.16 224,-224c0,-123.71 -100.29,-224 -224,-224z" />
