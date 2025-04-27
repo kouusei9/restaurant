@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +19,7 @@ import com.kouusei.restaurant.ErrorScreen
 import com.kouusei.restaurant.presentation.LoadingScreen
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.presentation.listview.RestaurantItemBar
+import com.kouusei.restaurant.presentation.utils.ZigzagDivider
 
 
 @Composable
@@ -75,6 +77,15 @@ fun FavoriteListView(
                 onNavDetail = onNavDetail,
                 isLike = onIsFavorite(it.id),
                 onLoveToggled = onFavoriteToggled
+            )
+        }
+        item {
+            ZigzagDivider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowColor = MaterialTheme.colorScheme.primary
             )
         }
     }
