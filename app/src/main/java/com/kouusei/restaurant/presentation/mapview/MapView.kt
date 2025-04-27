@@ -111,7 +111,7 @@ fun MapView(
         )
 
         Map(
-            cameraPositionState,
+            cameraPositionState = cameraPositionState,
             viewState = viewState,
             selectedShop = selectedShop,
             onSelectedShopChange = onSelectedShopChange,
@@ -166,6 +166,7 @@ fun Map(
             scope.launch {
                 cameraPositionState.animate(
                     update = CameraUpdateFactory.newLatLngZoom(shop.location, 16f),
+                    durationMs = 500
                 )
             }
         }
@@ -232,7 +233,7 @@ fun FloatingPositionButton(
                             location?.let {
                                 cameraPositionState.animate(
                                     update = CameraUpdateFactory.newLatLngZoom(it.toLatLng(), 16f),
-                                    durationMs = 1000
+                                    durationMs = 500
                                 )
                             }
                         } catch (e: SecurityException) {
@@ -407,8 +408,8 @@ fun zoomAll(
 ) {
     scope.launch {
         cameraPositionState.animate(
-            update = CameraUpdateFactory.newLatLngBounds(boundingBox, 60),
-            durationMs = 100
+            update = CameraUpdateFactory.newLatLngBounds(boundingBox, 100),
+            durationMs = 500
         )
     }
 }
