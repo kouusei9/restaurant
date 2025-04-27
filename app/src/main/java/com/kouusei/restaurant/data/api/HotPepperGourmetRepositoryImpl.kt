@@ -30,7 +30,7 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
         genre: String?,
         filters: Map<String, String>
     ): ApiResult<Results> {
-        delay(500)
+        delay(300)
         return try {
             val response =
                 apiService.gourmetSearch(
