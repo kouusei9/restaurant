@@ -154,7 +154,6 @@ fun AppNavGraph(
     val shopNames by restaurantViewModel.shopNames.collectAsState()
     // TODO save history keyword
     val keyword by restaurantViewModel.keyword.collectAsState()
-    val title by detailViewModel.title.collectAsState()
 
     // favorite shop
     val favoriteShopsModel: FavoriteShopsModel = viewModel()
@@ -470,12 +469,6 @@ fun AppNavGraph(
                         bottom = innerPadding.calculateBottomPadding()
                     )
             ) {
-                DetailTopBar(
-                    title = title,
-                    onNavBack = {
-                        navController.popBackStack()
-                    }
-                )
                 val shopId = backStackEntry.arguments?.getString("id") ?: ""
                 DetailView(
                     modifier = Modifier.fillMaxSize(),
@@ -486,6 +479,9 @@ fun AppNavGraph(
                     },
                     onFavoriteToggled = {
                         favoriteShopsModel.toggleFavorite(it)
+                    },
+                    onNavBack = {
+                        navController.popBackStack()
                     }
                 )
             }

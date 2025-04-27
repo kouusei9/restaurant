@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -63,6 +66,7 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.kouusei.restaurant.DetailTopBar
 import com.kouusei.restaurant.R
 import com.kouusei.restaurant.presentation.ErrorScreen
 import com.kouusei.restaurant.presentation.LoadingScreen
@@ -79,6 +83,7 @@ fun DetailView(
     detailViewModel: DetailViewModel,
     onIsFavorite: (id: String) -> Boolean,
     onFavoriteToggled: (id: String) -> Unit,
+    onNavBack: () -> Unit
 ) {
     val state by detailViewModel.detailViewState.collectAsState()
 
@@ -100,7 +105,8 @@ fun DetailView(
                 modifier = modifier,
                 (state as DetailViewState.Success).shopDetail,
                 onFavoriteToggled = onFavoriteToggled,
-                onIsFavorite = onIsFavorite
+                onIsFavorite = onIsFavorite,
+                onNavBack = onNavBack
             )
         }
     }
@@ -112,6 +118,7 @@ fun ShopDetailView(
     shopDetail: ShopDetail,
     onIsFavorite: (id: String) -> Boolean,
     onFavoriteToggled: (id: String) -> Unit,
+    onNavBack: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     var showDialog by remember { mutableStateOf(false) }
@@ -120,186 +127,198 @@ fun ShopDetailView(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
-                .background(MaterialTheme.colorScheme.background)
+                .padding(WindowInsets.statusBars.asPaddingValues())
         ) {
-            Box(
+            DetailTopBar(
+                title = shopDetail.name,
+                onNavBack = onNavBack
+            )
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
-                AsyncImage(
-                    model = shopDetail.url,
-                    contentDescription = "shop image",
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp),
-                    contentScale = ContentScale.FillWidth,
-                    placeholder = debugPlaceholder(R.drawable.test_shop_img),
-                    colorFilter = ColorFilter.tint(Color(0x66000000), BlendMode.Multiply)
-                )
-
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(bottom = 5.dp, start = 5.dp)
+                        .wrapContentHeight()
                 ) {
-                    Text(text = shopDetail.catch, color = Color.White)
-                    Text(text = shopDetail.name, color = Color.White, fontSize = 20.sp)
-                    Text(text = shopDetail.budget, color = Color.White)
-                }
-            }
-
-            CustomColumn {
-                CustomTitle(
-                    text = "¥ ${shopDetail.budget}",
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-                Row {
-                    CustomRowWithIcon(
-                        text = stringResource(R.string.detail_card),
-                        isCheck = shopDetail.card,
-                        modifier = Modifier.weight(1f)
+                    AsyncImage(
+                        model = shopDetail.url,
+                        contentDescription = "shop image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp),
+                        contentScale = ContentScale.FillWidth,
+                        placeholder = debugPlaceholder(R.drawable.test_shop_img),
+                        colorFilter = ColorFilter.tint(Color(0x66000000), BlendMode.Multiply)
                     )
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
 
-            CustomColumn {
-                CustomTitle(text = stringResource(R.string.title_open))
-                Column {
-                    splitBusinessHours(shopDetail.openTime).forEach { pair ->
-                        CustomText(text = pair.first, lineHeight = 12.sp)
-                        Text(
-                            modifier = Modifier.padding(start = 16.dp),
-                            text = pair.second,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 10.sp,
-                            lineHeight = 12.sp
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(bottom = 5.dp, start = 5.dp)
+                    ) {
+                        Text(text = shopDetail.catch, color = Color.White)
+                        Text(text = shopDetail.name, color = Color.White, fontSize = 20.sp)
+                        Text(text = shopDetail.budget, color = Color.White)
+                    }
+                }
+
+                CustomColumn {
+                    CustomTitle(
+                        text = "¥ ${shopDetail.budget}",
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                    Row {
+                        CustomRowWithIcon(
+                            text = stringResource(R.string.detail_card),
+                            isCheck = shopDetail.card,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+
+                CustomColumn {
+                    CustomTitle(text = stringResource(R.string.title_open))
+                    Column {
+                        splitBusinessHours(shopDetail.openTime).forEach { pair ->
+                            CustomText(text = pair.first, lineHeight = 12.sp)
+                            Text(
+                                modifier = Modifier.padding(start = 16.dp),
+                                text = pair.second,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.sp,
+                                lineHeight = 12.sp
+                            )
+                        }
+                    }
+
+                    CustomDivider()
+                    CustomTitle(text = stringResource(R.string.title_close))
+                    CustomText(text = shopDetail.closeTime)
+                }
+                CustomColumn {
+                    CustomTitle(text = stringResource(R.string.title_menu))
+                    CustomDivider()
+
+                    Row {
+                        CustomRowWithIcon(
+                            text = stringResource(R.string.detail_course),
+                            isCheck = shopDetail.course,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        CustomRowWithIcon(
+                            text = stringResource(R.string.detail_free_food),
+                            isCheck = shopDetail.freeFood,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Row {
+                        CustomRowWithIcon(
+                            text = stringResource(R.string.detail_free_drink),
+                            isCheck = shopDetail.freeDrink,
+                            modifier = Modifier.weight(1f)
+                        )
+                        CustomRowWithIcon(
+                            text = stringResource(R.string.detail_launch),
+                            isCheck = shopDetail.lunch,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Row {
+                        CustomRowWithIcon(
+                            text = stringResource(R.string.detail_english),
+                            isCheck = shopDetail.english,
+                            modifier = Modifier.weight(1f)
+                        )
+                        CustomRowWithIcon(
+                            text = stringResource(R.string.detail_pet),
+                            isCheck = shopDetail.pet,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                val cameraPositionState = rememberCameraPositionState {}
+                cameraPositionState.position =
+                    CameraPosition.fromLatLngZoom(shopDetail.location, 16f)
+                CustomColumn(
+                    modifier = Modifier.clickable {
+                        showDialog = true
+                    }
+                ) {
+                    CustomTitle(text = stringResource(R.string.title_access))
+                    CustomDivider()
+                    CustomText(text = shopDetail.access)
+
+                    GoogleMap(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        cameraPositionState = cameraPositionState,
+                        onMapClick = {
+                            showDialog = true
+                        }
+                    ) {
+                        Marker(
+                            state = MarkerState(position = shopDetail.location),
+                            onClick = { marker ->
+                                false
+                            }
                         )
                     }
                 }
 
-                CustomDivider()
-                CustomTitle(text = stringResource(R.string.title_close))
-                CustomText(text = shopDetail.closeTime)
-            }
-            CustomColumn {
-                CustomTitle(text = stringResource(R.string.title_menu))
-                CustomDivider()
-
-                Row {
-                    CustomRowWithIcon(
-                        text = stringResource(R.string.detail_course),
-                        isCheck = shopDetail.course,
-                        modifier = Modifier.weight(1f)
+                CustomColumn {
+                    CustomTitle(text = stringResource(R.string.title_equipment))
+                    CustomDivider()
+                    CustomRowTwoText(
+                        text1 = stringResource(R.string.detail_private_room),
+                        text2 = shopDetail.privateRoom
                     )
-
-                    CustomRowWithIcon(
-                        text = stringResource(R.string.detail_free_food),
-                        isCheck = shopDetail.freeFood,
-                        modifier = Modifier.weight(1f)
+                    CustomDivider()
+                    CustomRowTwoText(
+                        text1 = stringResource(R.string.detail_no_smoking),
+                        text2 = shopDetail.nonSmoking
                     )
-                }
-
-                Row {
-                    CustomRowWithIcon(
-                        text = stringResource(R.string.detail_free_drink),
-                        isCheck = shopDetail.freeDrink,
-                        modifier = Modifier.weight(1f)
+                    CustomDivider()
+                    CustomRowTwoText(
+                        text1 = stringResource(R.string.detail_horigotatsu),
+                        text2 = shopDetail.horigotatsu
                     )
-                    CustomRowWithIcon(
-                        text = stringResource(R.string.detail_launch),
-                        isCheck = shopDetail.lunch,
-                        modifier = Modifier.weight(1f)
+                    CustomDivider()
+                    CustomRowTwoText(
+                        text1 = stringResource(R.string.detail_parking),
+                        text2 = shopDetail.parking
                     )
-                }
-
-                Row {
-                    CustomRowWithIcon(
-                        text = stringResource(R.string.detail_english),
-                        isCheck = shopDetail.english,
-                        modifier = Modifier.weight(1f)
+                    CustomDivider()
+                    CustomRowTwoText(
+                        text1 = stringResource(R.string.detail_barrier_free),
+                        text2 = shopDetail.barrierFree
                     )
-                    CustomRowWithIcon(
-                        text = stringResource(R.string.detail_pet),
-                        isCheck = shopDetail.pet,
-                        modifier = Modifier.weight(1f)
+                    CustomDivider()
+                    CustomRowTwoText(
+                        text1 = stringResource(R.string.detail_wifi),
+                        text2 = shopDetail.wifi
                     )
                 }
-            }
-            val cameraPositionState = rememberCameraPositionState {}
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(shopDetail.location, 16f)
-            CustomColumn(
-                modifier = Modifier.clickable {
-                    showDialog = true
-                }
-            ) {
-                CustomTitle(text = stringResource(R.string.title_access))
-                CustomDivider()
-                CustomText(text = shopDetail.access)
 
-                GoogleMap(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp),
-                    cameraPositionState = cameraPositionState,
-                    onMapClick = {
-                        showDialog = true
-                    }
-                ) {
-                    Marker(
-                        state = MarkerState(position = shopDetail.location),
-                        onClick = { marker ->
-                            false
-                        }
+                CustomColumn {
+                    CustomTitle(text = stringResource(R.string.title_related))
+                    CustomDivider()
+                    CustomRowTwoText(
+                        text1 = stringResource(R.string.detail_child),
+                        text2 = shopDetail.child
                     )
                 }
-            }
-
-            CustomColumn {
-                CustomTitle(text = stringResource(R.string.title_equipment))
-                CustomDivider()
-                CustomRowTwoText(
-                    text1 = stringResource(R.string.detail_private_room),
-                    text2 = shopDetail.privateRoom
-                )
-                CustomDivider()
-                CustomRowTwoText(
-                    text1 = stringResource(R.string.detail_no_smoking),
-                    text2 = shopDetail.nonSmoking
-                )
-                CustomDivider()
-                CustomRowTwoText(
-                    text1 = stringResource(R.string.detail_horigotatsu),
-                    text2 = shopDetail.horigotatsu
-                )
-                CustomDivider()
-                CustomRowTwoText(
-                    text1 = stringResource(R.string.detail_parking),
-                    text2 = shopDetail.parking
-                )
-                CustomDivider()
-                CustomRowTwoText(
-                    text1 = stringResource(R.string.detail_barrier_free),
-                    text2 = shopDetail.barrierFree
-                )
-                CustomDivider()
-                CustomRowTwoText(
-                    text1 = stringResource(R.string.detail_wifi),
-                    text2 = shopDetail.wifi
-                )
-            }
-
-            CustomColumn {
-                CustomTitle(text = stringResource(R.string.title_related))
-                CustomDivider()
-                CustomRowTwoText(
-                    text1 = stringResource(R.string.detail_child),
-                    text2 = shopDetail.child
-                )
             }
         }
+
 
         FloatingActionButton(
             onClick = {
@@ -527,5 +546,6 @@ fun ShopDetailViewPreview() {
         ),
         onIsFavorite = { true },
         onFavoriteToggled = {},
+        onNavBack = {}
     )
 }

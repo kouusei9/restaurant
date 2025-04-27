@@ -121,7 +121,7 @@ fun ErrorScreen(errorStr: String) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = errorStr)
+        Text(text = "エラー：$errorStr", style = MaterialTheme.typography.bodyMedium)
     }
 }
 

@@ -22,11 +22,8 @@ class DetailViewModel @Inject constructor(
     private val _detailViewState = MutableStateFlow<DetailViewState>(DetailViewState.Loading)
     val detailViewState: StateFlow<DetailViewState> = _detailViewState.asStateFlow()
 
-    private val _title = MutableStateFlow<String>("")
-    val title: StateFlow<String> = _title.asStateFlow()
 
     fun load(id: String) {
-        _title.value = ""
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val result = hotPepperGourmetRepository.shopDetailById(id)
@@ -37,7 +34,6 @@ class DetailViewModel @Inject constructor(
 
                     is ApiResult.Success -> {
                         _detailViewState.value = DetailViewState.Success(result.data.toShopDetail())
-                        _title.value = result.data.name
                     }
                 }
             }
