@@ -236,6 +236,9 @@ class RestaurantViewModel @Inject constructor(
                         boundingBox = boundingBox,
                         result.data.results_available
                     )
+                if (result.data.results_available <= shopList.size) {
+                    _isReachEnd.value = true
+                }
                 _selectedShop.value = shopList.firstOrNull()
             }
         }
