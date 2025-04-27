@@ -12,7 +12,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.InfiniteTransition
@@ -21,9 +20,10 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -61,6 +61,8 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
+import com.kouusei.restaurant.presentation.EmptyScreen
+import com.kouusei.restaurant.presentation.ErrorScreen
 import com.kouusei.restaurant.presentation.LoadingScreen
 import com.kouusei.restaurant.presentation.RestaurantViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewState
@@ -69,7 +71,6 @@ import com.kouusei.restaurant.presentation.detailview.DetailView
 import com.kouusei.restaurant.presentation.detailview.DetailViewModel
 import com.kouusei.restaurant.presentation.favoriteview.FavoriteListScreen
 import com.kouusei.restaurant.presentation.favoriteview.FavoriteShopsModel
-import com.kouusei.restaurant.presentation.favoriteview.FavoriteState
 import com.kouusei.restaurant.presentation.listview.RestaurantList
 import com.kouusei.restaurant.presentation.mapview.MapView
 import com.kouusei.restaurant.presentation.utils.toLatLng
@@ -91,31 +92,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RestaurantTheme {
-                var restaurantViewModel: RestaurantViewModel = viewModel()
-                val detailViewModel: DetailViewModel = viewModel()
-
-                val shopNames by restaurantViewModel.shopNames.collectAsState()
-                // TODO save history keyword
-                val keyword by restaurantViewModel.keyword.collectAsState()
-                val title by detailViewModel.title.collectAsState()
-
-                // favorite shop
-                val favoriteShopsModel: FavoriteShopsModel = viewModel()
-                val favoriteKeyword by favoriteShopsModel.keyword.collectAsState()
-                val favoriteState by favoriteShopsModel.favoriteState.collectAsState()
-                val favoriteShopIds by favoriteShopsModel.shopIds.collectAsState()
-                val favoriteShops by favoriteShopsModel.shops.collectAsState()
-
-                // request by name when keyword change
-                val debounceQuery = remember { mutableStateOf("") }
-                LaunchedEffect(keyword) {
-                    delay(500) // wait 500 after keyword change
-                    if (keyword != debounceQuery.value) {
-                        debounceQuery.value = keyword
-                        restaurantViewModel.loadShopNameList()
-                    }
-                }
-
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 var currentRoute = navBackStackEntry?.destination?.route
@@ -133,67 +109,20 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background),
-                    topBar = {
-                        if (currentRoute != null) {
-                            Crossfade(
-                                targetState = currentRoute in topRoutes,
-                                label = "TopBarCrossfade"
-                            ) { showRestaurantTopBar ->
-                                if (showRestaurantTopBar) {
-                                    // search in favorite
-                                    if (currentRoute == Favorites.route) {
-                                        RestaurantTopBar(
-                                            keyword = favoriteKeyword,
-                                            onKeywordChange = {
-                                                favoriteShopsModel.onKeyWordChange(it)
-                                            },
-                                            onSearch = {
-                                                favoriteShopsModel.filter()
-                                            },
-                                            suggestions = favoriteShops.filter {
-                                                it.name.contains(
-                                                    favoriteKeyword
-                                                )
-                                            }.map { it.name }
-
-                                        )
-                                    } else {
-                                        RestaurantTopBar(
-                                            keyword = keyword,
-                                            onKeywordChange = {
-                                                restaurantViewModel.onKeyWordChange(it)
-                                            },
-                                            onSearch = {
-                                                restaurantViewModel.reloadShopList()
-                                            },
-                                            suggestions = shopNames
-                                        )
-                                    }
-                                } else {
-                                    DetailTopBar(
-                                        title = title,
-                                        onNavBack = {
-                                            navController.popBackStack()
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    },
                     bottomBar = {
                         AnimatedVisibility(
                             visible = currentRoute in topRoutes,
-                            enter =
-                            fadeIn(
-                                animationSpec = tween(
-                                    300, easing = LinearEasing
-                                )
+                            enter = slideInVertically(
+                                animationSpec = tween(500),
+                                initialOffsetY = { height ->
+                                    0
+                                }
                             ),
-                            exit =
-                            fadeOut(
-                                animationSpec = tween(
-                                    300, easing = LinearEasing
-                                )
+                            exit = slideOutVertically(
+                                animationSpec = tween(500),
+                                targetOffsetY = { height ->
+                                    0
+                                }
                             )
                         ) {
                             BottomNav(
@@ -205,13 +134,7 @@ class MainActivity : ComponentActivity() {
                     AppNavGraph(
                         navController = navController,
                         innerPadding = innerPadding,
-                        restaurantViewModel = restaurantViewModel,
                         fusedLocationClient = fusedLocationClient,
-                        keyword = keyword,
-                        detailViewModel = detailViewModel,
-                        favoriteState = favoriteState,
-                        favoriteShopsModel = favoriteShopsModel,
-                        favoriteShopIds = favoriteShopIds
                     )
                 }
             }
@@ -223,71 +146,296 @@ class MainActivity : ComponentActivity() {
 fun AppNavGraph(
     navController: NavHostController,
     innerPadding: PaddingValues,
-    restaurantViewModel: RestaurantViewModel,
     fusedLocationClient: FusedLocationProviderClient,
-    keyword: String,
-    detailViewModel: DetailViewModel,
-    favoriteShopsModel: FavoriteShopsModel,
-    favoriteState: FavoriteState,
-    favoriteShopIds: Set<String>
 ) {
-//    val favoriteShopsModel: FavoriteShopsModel = viewModel()
-//    val favoriteState by favoriteShopsModel.favoriteState.collectAsState()
-//
-//    val favoriteShopIds by favoriteShopsModel.shopIds.collectAsState()
+    var restaurantViewModel: RestaurantViewModel = viewModel()
+    val detailViewModel: DetailViewModel = viewModel()
 
+    val shopNames by restaurantViewModel.shopNames.collectAsState()
+    // TODO save history keyword
+    val keyword by restaurantViewModel.keyword.collectAsState()
+    val title by detailViewModel.title.collectAsState()
+
+    // favorite shop
+    val favoriteShopsModel: FavoriteShopsModel = viewModel()
+    val favoriteKeyword by favoriteShopsModel.keyword.collectAsState()
+    val favoriteState by favoriteShopsModel.favoriteState.collectAsState()
+    val favoriteShopIds by favoriteShopsModel.shopIds.collectAsState()
+    val favoriteShops by favoriteShopsModel.shops.collectAsState()
+
+    // request by name when keyword change
+    val debounceQuery = remember { mutableStateOf("") }
+    LaunchedEffect(keyword) {
+        delay(500) // wait 500 after keyword change
+        if (keyword != debounceQuery.value) {
+            debounceQuery.value = keyword
+            restaurantViewModel.loadShopNameList()
+        }
+    }
+
+    val state by restaurantViewModel.restaurantViewState.collectAsState()
+
+    val distanceRange by restaurantViewModel.distanceRange.collectAsState()
+    val orderMethod by restaurantViewModel.orderMethod.collectAsState()
+    val genre by restaurantViewModel.genre.collectAsState()
+    val searchFilters by restaurantViewModel.searchFilters.collectAsState()
+
+    val isLoading by restaurantViewModel.isLoading.collectAsState()
+    val isReloading by restaurantViewModel.isReloading.collectAsState()
+    val isReachEnd by restaurantViewModel.isReachEnd.collectAsState()
+
+    val cameraPositionState by restaurantViewModel.cameraPositionState.collectAsState()
+    val selectedShop by restaurantViewModel.selectedShop.collectAsState()
+
+    val mapViewListState = rememberLazyListState()
+    val filterListState = rememberLazyListState()
+    val listViewListState = rememberLazyListState()
+
+    val infiniteTransition = rememberInfiniteTransition()
+
+    val scope = rememberCoroutineScope()
     NavHost(navController, startDestination = Map.route) {
         composable(Map.route) {
-            HomeScreen(
-                nav = navController,
-                modifier = Modifier.padding(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding()
-                ),
-                fusedLocationClient = fusedLocationClient,
-                markerType = Map,
-                restaurantViewModel = restaurantViewModel,
-                keyword = keyword,
-                favoriteShopsModel = favoriteShopsModel,
-                onIsFavorite = {
-                    favoriteShopIds.contains(it)
+            when (state) {
+                is RestaurantViewState.Error -> {
+                    ErrorScreen((state as RestaurantViewState.Error).message)
                 }
-            )
+
+                RestaurantViewState.Loading -> {
+                    LoadingScreen(infiniteTransition)
+                }
+
+                RestaurantViewState.Empty -> {
+                    EmptyScreen {
+                        restaurantViewModel.resetFilterAndReload()
+                    }
+                }
+
+                is RestaurantViewState.Success -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                bottom = innerPadding.calculateBottomPadding()
+                            )
+                    ) {
+                        RestaurantTopBar(
+                            keyword = keyword,
+                            onKeywordChange = {
+                                restaurantViewModel.onKeyWordChange(it)
+                            },
+                            onSearch = {
+                                restaurantViewModel.reloadShopList()
+                            },
+                            suggestions = shopNames
+                        )
+
+                        FilterView(
+                            onDistanceChange = {
+                                restaurantViewModel.onDistanceRangeChange(it)
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
+                            },
+                            onOrderMethodChange = {
+                                restaurantViewModel.onOrderMethodChange(it)
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
+                            },
+                            onFilterChange = {
+                                restaurantViewModel.toggleFilter(it)
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
+                            },
+                            selectedDistance = distanceRange,
+                            selectedOrderMethod = orderMethod,
+                            state = searchFilters,
+                            keyword = keyword,
+                            listState = filterListState,
+                            selectedGenre = genre,
+                            onSelectedGenreChange = {
+                                restaurantViewModel.onGenreChange(it)
+                            },
+                        )
+                        MapView(
+                            cameraPositionState = cameraPositionState,
+                            listState = mapViewListState,
+                            viewState = state as RestaurantViewState.Success,
+                            selectedShop = selectedShop,
+                            onSelectedShopChange = {
+                                restaurantViewModel.onSelectedShopChange(it)
+                            },
+                            onNavDetail = {
+                                navController.navigate(route = Detail(id = it).route)
+                            },
+                            onIsFavorite = {
+                                favoriteShopIds.contains(it)
+                            },
+                            isReloading = isReloading,
+                            onFavoriteToggled = {
+                                favoriteShopsModel.toggleFavorite(it)
+                            },
+                            keyword = keyword,
+                            onKeywordChange = {
+                                restaurantViewModel.onKeyWordChange(it)
+                            },
+                            onSearch = {
+                                restaurantViewModel.reloadShopList()
+                            },
+                            suggestions = shopNames,
+                        )
+                    }
+                }
+
+                RestaurantViewState.RequestPermission -> {
+                    LocationHandler(
+                        fusedLocationClient = fusedLocationClient,
+                        infiniteTransition = infiniteTransition,
+                        onSuccess = restaurantViewModel::permissionSuccess,
+                        onFailed = restaurantViewModel::errMessage
+                    )
+                }
+            }
         }
         composable(List.route) {
-            HomeScreen(
-                nav = navController,
-                modifier = Modifier.padding(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding()
-                ),
-                fusedLocationClient = fusedLocationClient,
-                markerType = List,
-                restaurantViewModel = restaurantViewModel,
-                keyword = keyword,
-                favoriteShopsModel = favoriteShopsModel,
-                onIsFavorite = {
-                    favoriteShopIds.contains(it)
+            when (state) {
+                is RestaurantViewState.Error -> {
+                    ErrorScreen((state as RestaurantViewState.Error).message)
                 }
-            )
+
+                RestaurantViewState.Loading -> {
+                    LoadingScreen(infiniteTransition)
+                }
+
+                RestaurantViewState.Empty -> {
+                    EmptyScreen {
+                        restaurantViewModel.resetFilterAndReload()
+                    }
+                }
+
+                is RestaurantViewState.Success -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                bottom = innerPadding.calculateBottomPadding()
+                            )
+                    ) {
+                        RestaurantTopBar(
+                            keyword = keyword,
+                            onKeywordChange = {
+                                restaurantViewModel.onKeyWordChange(it)
+                            },
+                            onSearch = {
+                                restaurantViewModel.reloadShopList()
+                            },
+                            suggestions = shopNames
+                        )
+
+                        FilterView(
+                            onDistanceChange = {
+                                restaurantViewModel.onDistanceRangeChange(it)
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+//                            Log.d(TAG, "HomeScreen: distance change: ${listViewListState.firstVisibleItemIndex}")
+                                }
+                            },
+                            onOrderMethodChange = {
+                                restaurantViewModel.onOrderMethodChange(it)
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
+                            },
+                            onFilterChange = {
+                                restaurantViewModel.toggleFilter(it)
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
+                            },
+                            selectedDistance = distanceRange,
+                            selectedOrderMethod = orderMethod,
+                            state = searchFilters,
+                            keyword = keyword,
+                            listState = filterListState,
+                            selectedGenre = genre,
+                            onSelectedGenreChange = {
+                                restaurantViewModel.onGenreChange(it)
+                            },
+                        )
+                        RestaurantList(
+                            restaurantViewState = state as RestaurantViewState.Success,
+                            onNavDetail = {
+                                navController.navigate(route = Detail(id = it).route)
+                            },
+                            onLoadMore = {
+                                restaurantViewModel.loadMore()
+                            },
+                            isLoadingMore = isLoading,
+                            isReachEnd = isReachEnd,
+                            onIsFavorite = {
+                                favoriteShopIds.contains(it)
+                            },
+                            isReloading = isReloading,
+                            listState = listViewListState,
+                            onFavoriteToggled = {
+                                favoriteShopsModel.toggleFavorite(it)
+                            }
+                        )
+
+                    }
+                }
+
+                RestaurantViewState.RequestPermission -> {
+                    LocationHandler(
+                        fusedLocationClient = fusedLocationClient,
+                        infiniteTransition = infiniteTransition,
+                        onSuccess = restaurantViewModel::permissionSuccess,
+                        onFailed = restaurantViewModel::errMessage
+                    )
+                }
+            }
+
         }
         composable(Favorites.route) {
-            FavoriteListScreen(
-                modifier = Modifier.padding(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding()
-                ),
-                viewState = favoriteState,
-                onNavDetail = {
-                    navController.navigate(route = Detail(id = it).route)
-                },
-                onIsFavorite = {
-                    favoriteShopIds.contains(it)
-                },
-                onFavoriteToggled = {
-                    favoriteShopsModel.toggleFavorite(it)
-                }
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        bottom = innerPadding.calculateBottomPadding()
+                    )
+            ) {
+                RestaurantTopBar(
+                    keyword = favoriteKeyword,
+                    onKeywordChange = {
+                        favoriteShopsModel.onKeyWordChange(it)
+                    },
+                    onSearch = {
+                        favoriteShopsModel.filter()
+                    },
+                    suggestions = favoriteShops.filter {
+                        it.name.contains(
+                            favoriteKeyword
+                        )
+                    }.map { it.name }
+
+                )
+                FavoriteListScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    viewState = favoriteState,
+                    onNavDetail = {
+                        navController.navigate(route = Detail(id = it).route)
+                    },
+                    onIsFavorite = {
+                        favoriteShopIds.contains(it)
+                    },
+                    onFavoriteToggled = {
+                        favoriteShopsModel.toggleFavorite(it)
+                    }
+                )
+            }
+
         }
         composable(
             "detail/{id}",
@@ -312,21 +460,32 @@ fun AppNavGraph(
                 )
             }
         ) { backStackEntry ->
-            val shopId = backStackEntry.arguments?.getString("id") ?: ""
-            DetailView(
-                modifier = Modifier.padding(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding()
-                ),
-                id = shopId,
-                detailViewModel = detailViewModel,
-                onIsFavorite = {
-                    favoriteShopIds.contains(it)
-                },
-                onFavoriteToggled = {
-                    favoriteShopsModel.toggleFavorite(it)
-                }
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        bottom = innerPadding.calculateBottomPadding()
+                    )
+            ) {
+                DetailTopBar(
+                    title = title,
+                    onNavBack = {
+                        navController.popBackStack()
+                    }
+                )
+                val shopId = backStackEntry.arguments?.getString("id") ?: ""
+                DetailView(
+                    modifier = Modifier.fillMaxSize(),
+                    id = shopId,
+                    detailViewModel = detailViewModel,
+                    onIsFavorite = {
+                        favoriteShopIds.contains(it)
+                    },
+                    onFavoriteToggled = {
+                        favoriteShopsModel.toggleFavorite(it)
+                    }
+                )
+            }
         }
     }
 }
@@ -458,6 +617,7 @@ fun getLastLocation(
                 if (location != null) {
                     onSuccess(LatLng(location.latitude, location.longitude))
                 } else {
+                    // TODO instruction change.
                     onFailed("Location unavailable")
                 }
             }
@@ -466,143 +626,6 @@ fun getLastLocation(
             }
     } catch (e: SecurityException) {
         onFailed("SecurityException: ${e.message}")
-    }
-}
-
-@Composable
-fun HomeScreen(
-    nav: NavHostController,
-    modifier: Modifier,
-    fusedLocationClient: FusedLocationProviderClient,
-    markerType: Route,
-    restaurantViewModel: RestaurantViewModel,
-    favoriteShopsModel: FavoriteShopsModel,
-    keyword: String,
-    onIsFavorite: (id: String) -> Boolean,
-) {
-    val state by restaurantViewModel.restaurantViewState.collectAsState()
-
-    val distanceRange by restaurantViewModel.distanceRange.collectAsState()
-    val orderMethod by restaurantViewModel.orderMethod.collectAsState()
-    val genre by restaurantViewModel.genre.collectAsState()
-    val searchFilters by restaurantViewModel.searchFilters.collectAsState()
-
-    val isLoading by restaurantViewModel.isLoading.collectAsState()
-    val isReloading by restaurantViewModel.isReloading.collectAsState()
-    val isReachEnd by restaurantViewModel.isReachEnd.collectAsState()
-
-    val cameraPositionState by restaurantViewModel.cameraPositionState.collectAsState()
-    val selectedShop by restaurantViewModel.selectedShop.collectAsState()
-
-    val mapViewListState = rememberLazyListState()
-    val filterListState = rememberLazyListState()
-    val listViewListState = rememberLazyListState()
-
-    val infiniteTransition = rememberInfiniteTransition()
-
-    val scope = rememberCoroutineScope()
-
-    when (state) {
-        is RestaurantViewState.Error -> {
-            ErrorScreen((state as RestaurantViewState.Error).message)
-        }
-
-        RestaurantViewState.Loading -> {
-            LoadingScreen(infiniteTransition)
-        }
-
-        is RestaurantViewState.Success -> {
-            Column(modifier = modifier) {
-                FilterView(
-                    onDistanceChange = {
-                        restaurantViewModel.onDistanceRangeChange(it)
-                        scope.launch {
-                            listViewListState.animateScrollToItem(0)
-//                            Log.d(TAG, "HomeScreen: distance change: ${listViewListState.firstVisibleItemIndex}")
-                        }
-                    },
-                    onOrderMethodChange = {
-                        restaurantViewModel.onOrderMethodChange(it)
-                        scope.launch {
-                            listViewListState.animateScrollToItem(0)
-                        }
-                    },
-                    onFilterChange = {
-                        restaurantViewModel.toggleFilter(it)
-                        scope.launch {
-                            listViewListState.animateScrollToItem(0)
-                        }
-                    },
-                    selectedDistance = distanceRange,
-                    selectedOrderMethod = orderMethod,
-                    state = searchFilters,
-                    keyword = keyword,
-                    listState = filterListState,
-                    selectedGenre = genre,
-                    onSelectedGenreChange = {
-                        restaurantViewModel.onGenreChange(it)
-                    },
-                )
-                if (markerType == List) {
-                    RestaurantList(
-                        restaurantViewState = state as RestaurantViewState.Success,
-                        onNavDetail = {
-                            nav.navigate(route = Detail(id = it).route)
-                        },
-                        onLoadMore = {
-                            restaurantViewModel.loadMore()
-                        },
-                        isLoadingMore = isLoading,
-                        isReachEnd = isReachEnd,
-                        onIsFavorite = onIsFavorite,
-                        isReloading = isReloading,
-                        listState = listViewListState,
-                        onFavoriteToggled = {
-                            favoriteShopsModel.toggleFavorite(it)
-                        }
-                    )
-                } else if (markerType == Map) {
-                    MapView(
-                        cameraPositionState = cameraPositionState,
-                        listState = mapViewListState,
-                        viewState = state as RestaurantViewState.Success,
-                        selectedShop = selectedShop,
-                        onSelectedShopChange = {
-                            restaurantViewModel.onSelectedShopChange(it)
-                        },
-                        onNavDetail = {
-                            nav.navigate(route = Detail(id = it).route)
-                        },
-                        onIsFavorite = onIsFavorite,
-                        isReloading = isReloading,
-                        onFavoriteToggled = {
-                            favoriteShopsModel.toggleFavorite(it)
-                        }
-                    )
-                }
-            }
-        }
-
-        RestaurantViewState.RequestPermission -> {
-            LocationHandler(
-                fusedLocationClient = fusedLocationClient,
-                infiniteTransition = infiniteTransition,
-                onSuccess = restaurantViewModel::permissionSuccess,
-                onFailed = restaurantViewModel::errMessage
-            )
-        }
-    }
-
-}
-
-
-@Composable
-fun ErrorScreen(errorStr: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = errorStr)
     }
 }
 

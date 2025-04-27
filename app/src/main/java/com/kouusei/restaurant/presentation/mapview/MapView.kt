@@ -68,6 +68,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.kouusei.restaurant.R
+import com.kouusei.restaurant.RestaurantTopBar
 import com.kouusei.restaurant.presentation.RestaurantViewState
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.presentation.listview.RestaurantItemBar
@@ -82,6 +83,10 @@ val TAG = "MapView"
 
 @Composable
 fun MapView(
+    keyword: String,
+    onKeywordChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    suggestions: List<String>,
     listState: LazyListState,
     cameraPositionState: CameraPositionState,
     viewState: RestaurantViewState.Success,
@@ -98,6 +103,13 @@ fun MapView(
             .fillMaxSize()
             .background(color = MaterialTheme.colorScheme.background)
     ) {
+        RestaurantTopBar(
+            keyword = keyword,
+            onKeywordChange = onKeywordChange,
+            onSearch = onSearch,
+            suggestions = suggestions
+        )
+
         Map(
             cameraPositionState,
             viewState = viewState,
@@ -436,6 +448,10 @@ fun MapViewPreview(
         onIsFavorite = { a -> false },
         onNavDetail = { },
         onFavoriteToggled = {},
-        isReloading = true
+        isReloading = true,
+        keyword = "",
+        onKeywordChange = {},
+        onSearch = {},
+        suggestions = emptyList()
     )
 }

@@ -80,7 +80,7 @@ class RestaurantViewModel @Inject constructor(
 
     }
 
-    fun resetAllFilters() {
+    private fun resetAllFilters() {
         _searchFilters.value = SearchFilters()
         _distanceRange.value = DistanceRange.RANGE_1000M
         _genres.value = Genre.Genre_G000
@@ -198,18 +198,7 @@ class RestaurantViewModel @Inject constructor(
                     range = distanceRange.value,
                     order = order,
                 ) { result ->
-                    if (result is ApiResult.Success) {
-                        if (result.data.results_available == 0 && distanceRange.value != DistanceRange.RANGE_NO) {
-                            resetAllFilters()
-                            _distanceRange.value = DistanceRange.RANGE_NO
-                            reloadShopList()
-                        } else {
-                            _isReloading.value = false
-                            refreshShopList(result)
-                        }
-                    } else {
-                        _isReloading.value = false
-                    }
+                    refreshShopList(result)
                 }
             }
         }
@@ -226,20 +215,28 @@ class RestaurantViewModel @Inject constructor(
             }
 
             is ApiResult.Success -> {
-                val shopList = result.data.shop.map { it.toShopSummary() }
-                val boundingBox =
-                    if (shopList.isEmpty()) listOf<LatLng>(_location!!).toLatLngBounds() else
-                        result.data.shop.map { it.toShopSummary().location }.toLatLngBounds()
-                _restaurantViewState.value =
-                    RestaurantViewState.Success(
-                        shopList = shopList,
-                        boundingBox = boundingBox,
-                        result.data.results_available
-                    )
-                if (result.data.results_available <= shopList.size) {
+                if (result.data.shop.isEmpty()) {
+                    _restaurantViewState.value = RestaurantViewState.Empty
+                    _isReloading.value = false
                     _isReachEnd.value = true
+                } else {
+                    val shopList = result.data.shop.map { it.toShopSummary() }
+                    val boundingBox =
+                        if (shopList.isEmpty()) listOf<LatLng>(_location!!).toLatLngBounds() else
+                            result.data.shop.map { it.toShopSummary().location }.toLatLngBounds()
+                    _restaurantViewState.value =
+                        RestaurantViewState.Success(
+                            shopList = shopList,
+                            boundingBox = boundingBox,
+                            result.data.results_available
+                        )
+                    if (result.data.results_available <= shopList.size) {
+                        _isReachEnd.value = true
+                    }
+                    _isReloading.value = false
+                    _isLoading.value = false
+                    _selectedShop.value = shopList.firstOrNull()
                 }
-                _selectedShop.value = shopList.firstOrNull()
             }
         }
     }
@@ -265,6 +262,11 @@ class RestaurantViewModel @Inject constructor(
                 val boundingBox =
                     if (combinedList.isEmpty()) listOf<LatLng>(_location!!).toLatLngBounds() else
                         combinedList.map { it.location }.toLatLngBounds()
+
+                if (combinedList.size >= result.data.results_available) {
+                    _isReachEnd.value = true
+                }
+
                 _restaurantViewState.value =
                     RestaurantViewState.Success(
                         shopList = combinedList,
@@ -390,6 +392,7 @@ class RestaurantViewModel @Inject constructor(
             val state = restaurantViewState.value as RestaurantViewState.Success
             if (state.shopList.size >= state.totalSize) {
                 _isReachEnd.value = true
+                _isLoading.value = false
                 Log.d(TAG, "loadMore: isReachEnd to true: $isReachEnd")
                 return
             }

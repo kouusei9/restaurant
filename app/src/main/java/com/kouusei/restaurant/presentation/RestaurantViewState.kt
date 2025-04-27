@@ -12,5 +12,6 @@ sealed class RestaurantViewState {
         val totalSize: Int
     ) : RestaurantViewState()
 
+    data object Empty : RestaurantViewState()
     data class Error(val message: String) : RestaurantViewState()
 }
