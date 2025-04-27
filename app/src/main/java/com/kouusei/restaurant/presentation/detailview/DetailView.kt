@@ -1,6 +1,11 @@
 package com.kouusei.restaurant.presentation.detailview
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,14 +25,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +48,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -101,6 +114,8 @@ fun ShopDetailView(
     onFavoriteToggled: (id: String) -> Unit,
 ) {
     val scrollState = rememberScrollState()
+    var showDialog by remember { mutableStateOf(false) }
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -108,8 +123,6 @@ fun ShopDetailView(
                 .verticalScroll(scrollState)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -217,7 +230,11 @@ fun ShopDetailView(
             }
             val cameraPositionState = rememberCameraPositionState {}
             cameraPositionState.position = CameraPosition.fromLatLngZoom(shopDetail.location, 16f)
-            CustomColumn {
+            CustomColumn(
+                modifier = Modifier.clickable {
+                    showDialog = true
+                }
+            ) {
                 CustomTitle(text = stringResource(R.string.title_access))
                 CustomDivider()
                 CustomText(text = shopDetail.access)
@@ -227,14 +244,16 @@ fun ShopDetailView(
                         .fillMaxWidth()
                         .height(100.dp),
                     cameraPositionState = cameraPositionState,
+                    onMapClick = {
+                        showDialog = true
+                    }
                 ) {
                     Marker(
                         state = MarkerState(position = shopDetail.location),
                         onClick = { marker ->
                             false
-                        },
+                        }
                     )
-
                 }
             }
 
@@ -304,8 +323,66 @@ fun ShopDetailView(
                 )
             }
         }
-    }
 
+        if (showDialog) {
+            CustomBottomSheet(
+                latLng = shopDetail.location,
+                name = shopDetail.name,
+                onDismiss = {
+                    showDialog = false
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomBottomSheet(
+    modifier: Modifier = Modifier,
+    latLng: LatLng?,
+    name: String,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val context = LocalContext.current
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    latLng?.let {
+                        openGoogleMapsNavigation(context, latLng, name)
+                        onDismiss()
+                    }
+                }) {
+                Text(text = "Google Mapで開く")
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text("キャンセル")
+            }
+        }
+    }
+}
+
+private fun openGoogleMapsNavigation(context: Context, latLng: LatLng, name: String) {
+    val gmmIntentUri = Uri.parse("geo:0,0?q=${latLng.latitude},${latLng.longitude}($name)")
+    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+    mapIntent.setPackage("com.google.android.apps.maps") // 指定Google地图App
+
+    if (mapIntent.resolveActivity(context.packageManager) != null) {
+        context.startActivity(mapIntent)
+    } else {
+        Toast.makeText(context, "Google Map no exist", Toast.LENGTH_SHORT).show()
+    }
 }
 
 @Composable
