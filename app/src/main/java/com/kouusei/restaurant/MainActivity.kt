@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            RestaurantTheme {
+            RestaurantTheme(dynamicColor = false) {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 var currentRoute = navBackStackEntry?.destination?.route
@@ -226,6 +226,9 @@ fun AppNavGraph(
                             },
                             onSearch = {
                                 restaurantViewModel.reloadShopList()
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
                             },
                             suggestions = shopNames
                         )
@@ -330,6 +333,9 @@ fun AppNavGraph(
                             },
                             onSearch = {
                                 restaurantViewModel.reloadShopList()
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
                             },
                             suggestions = shopNames
                         )
@@ -339,7 +345,6 @@ fun AppNavGraph(
                                 restaurantViewModel.onDistanceRangeChange(it)
                                 scope.launch {
                                     listViewListState.animateScrollToItem(0)
-//                            Log.d(TAG, "HomeScreen: distance change: ${listViewListState.firstVisibleItemIndex}")
                                 }
                             },
                             onOrderMethodChange = {
