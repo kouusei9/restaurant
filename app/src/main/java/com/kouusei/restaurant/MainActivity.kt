@@ -196,21 +196,11 @@ fun AppNavGraph(
     NavHost(navController, startDestination = Map.route) {
         composable(Map.route) {
             when (state) {
-                is RestaurantViewState.Error -> {
-                    ErrorScreen((state as RestaurantViewState.Error).message)
-                }
-
                 RestaurantViewState.Loading -> {
                     LoadingScreen(infiniteTransition)
                 }
 
-                RestaurantViewState.Empty -> {
-                    EmptyScreen {
-                        restaurantViewModel.resetFilterAndReload()
-                    }
-                }
-
-                is RestaurantViewState.Success -> {
+                is RestaurantViewState.Empty, is RestaurantViewState.Success, is RestaurantViewState.Error -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -258,35 +248,47 @@ fun AppNavGraph(
                             selectedGenre = genre,
                             onSelectedGenreChange = {
                                 restaurantViewModel.onGenreChange(it)
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
                             },
                         )
-                        MapView(
-                            cameraPositionState = cameraPositionState,
-                            listState = mapViewListState,
-                            viewState = state as RestaurantViewState.Success,
-                            selectedShop = selectedShop,
-                            onSelectedShopChange = {
-                                restaurantViewModel.onSelectedShopChange(it)
-                            },
-                            onNavDetail = {
-                                navController.navigate(route = Detail(id = it).route)
-                            },
-                            onIsFavorite = {
-                                favoriteShopIds.contains(it)
-                            },
-                            isReloading = isReloading,
-                            onFavoriteToggled = {
-                                favoriteShopsModel.toggleFavorite(it)
-                            },
-                            keyword = keyword,
-                            onKeywordChange = {
-                                restaurantViewModel.onKeyWordChange(it)
-                            },
-                            onSearch = {
-                                restaurantViewModel.reloadShopList()
-                            },
-                            suggestions = shopNames,
-                        )
+
+                        if (state is RestaurantViewState.Success) {
+                            MapView(
+                                cameraPositionState = cameraPositionState,
+                                listState = mapViewListState,
+                                viewState = state as RestaurantViewState.Success,
+                                selectedShop = selectedShop,
+                                onSelectedShopChange = {
+                                    restaurantViewModel.onSelectedShopChange(it)
+                                },
+                                onNavDetail = {
+                                    navController.navigate(route = Detail(id = it).route)
+                                },
+                                onIsFavorite = {
+                                    favoriteShopIds.contains(it)
+                                },
+                                isReloading = isReloading,
+                                onFavoriteToggled = {
+                                    favoriteShopsModel.toggleFavorite(it)
+                                },
+                                keyword = keyword,
+                                onKeywordChange = {
+                                    restaurantViewModel.onKeyWordChange(it)
+                                },
+                                onSearch = {
+                                    restaurantViewModel.reloadShopList()
+                                },
+                                suggestions = shopNames,
+                            )
+                        } else if (state is RestaurantViewState.Empty){
+                            EmptyScreen {
+                                restaurantViewModel.resetFilterAndReload()
+                            }
+                        } else {
+                            ErrorScreen((state as RestaurantViewState.Error).message)
+                        }
                     }
                 }
 
@@ -302,21 +304,11 @@ fun AppNavGraph(
         }
         composable(List.route) {
             when (state) {
-                is RestaurantViewState.Error -> {
-                    ErrorScreen((state as RestaurantViewState.Error).message)
-                }
-
-                RestaurantViewState.Loading -> {
+                is RestaurantViewState.Loading -> {
                     LoadingScreen(infiniteTransition)
                 }
 
-                RestaurantViewState.Empty -> {
-                    EmptyScreen {
-                        restaurantViewModel.resetFilterAndReload()
-                    }
-                }
-
-                is RestaurantViewState.Success -> {
+                is RestaurantViewState.Empty, is RestaurantViewState.Success, is RestaurantViewState.Error -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -364,35 +356,46 @@ fun AppNavGraph(
                             selectedGenre = genre,
                             onSelectedGenreChange = {
                                 restaurantViewModel.onGenreChange(it)
+                                scope.launch {
+                                    listViewListState.animateScrollToItem(0)
+                                }
                             },
-                        )
-                        RestaurantList(
-                            restaurantViewState = state as RestaurantViewState.Success,
-                            onNavDetail = {
-                                navController.navigate(route = Detail(id = it).route)
-                            },
-                            onLoadMore = {
-                                restaurantViewModel.loadMore()
-                            },
-                            isLoadingMore = isLoading,
-                            isReachEnd = isReachEnd,
-                            onIsFavorite = {
-                                favoriteShopIds.contains(it)
-                            },
-                            isReloading = isReloading,
-                            listState = listViewListState,
-                            onFavoriteToggled = {
-                                favoriteShopsModel.toggleFavorite(it)
-                            },
-                            onRefresh = {
-                                restaurantViewModel.reloadShopList()
-                            }
                         )
 
+                        if (state is RestaurantViewState.Success) {
+                            RestaurantList(
+                                restaurantViewState = state as RestaurantViewState.Success,
+                                onNavDetail = {
+                                    navController.navigate(route = Detail(id = it).route)
+                                },
+                                onLoadMore = {
+                                    restaurantViewModel.loadMore()
+                                },
+                                isLoadingMore = isLoading,
+                                isReachEnd = isReachEnd,
+                                onIsFavorite = {
+                                    favoriteShopIds.contains(it)
+                                },
+                                isReloading = isReloading,
+                                listState = listViewListState,
+                                onFavoriteToggled = {
+                                    favoriteShopsModel.toggleFavorite(it)
+                                },
+                                onRefresh = {
+                                    restaurantViewModel.reloadShopList()
+                                }
+                            )
+                        } else if (state is RestaurantViewState.Empty){
+                            EmptyScreen {
+                                restaurantViewModel.resetFilterAndReload()
+                            }
+                        } else {
+                            ErrorScreen((state as RestaurantViewState.Error).message)
+                        }
                     }
                 }
 
-                RestaurantViewState.RequestPermission -> {
+                is RestaurantViewState.RequestPermission -> {
                     LocationHandler(
                         fusedLocationClient = fusedLocationClient,
                         infiniteTransition = infiniteTransition,
