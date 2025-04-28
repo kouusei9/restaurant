@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseIn
@@ -48,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -73,6 +75,7 @@ import com.kouusei.restaurant.presentation.favoriteview.FavoriteListScreen
 import com.kouusei.restaurant.presentation.favoriteview.FavoriteShopsModel
 import com.kouusei.restaurant.presentation.listview.RestaurantList
 import com.kouusei.restaurant.presentation.mapview.MapView
+import com.kouusei.restaurant.presentation.splash.SplashViewModel
 import com.kouusei.restaurant.presentation.utils.toLatLng
 import com.kouusei.restaurant.ui.theme.RestaurantTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -85,11 +88,15 @@ const val TAG = "MainActivity"
 class MainActivity : ComponentActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+    private val splashViewModel: SplashViewModel by viewModels()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        splashScreen.setKeepOnScreenCondition { splashViewModel.isLoading.value }
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContent {
             RestaurantTheme(dynamicColor = false) {
                 val navController = rememberNavController()
@@ -282,7 +289,7 @@ fun AppNavGraph(
                                 },
                                 suggestions = shopNames,
                             )
-                        } else if (state is RestaurantViewState.Empty){
+                        } else if (state is RestaurantViewState.Empty) {
                             EmptyScreen {
                                 restaurantViewModel.resetFilterAndReload()
                             }
@@ -385,7 +392,7 @@ fun AppNavGraph(
                                     restaurantViewModel.reloadShopList()
                                 }
                             )
-                        } else if (state is RestaurantViewState.Empty){
+                        } else if (state is RestaurantViewState.Empty) {
                             EmptyScreen {
                                 restaurantViewModel.resetFilterAndReload()
                             }
