@@ -142,6 +142,7 @@ fun FilterView(
                 FilterChipWithDropdownMenu(
                     label = "ソート",
                     isSelected = true,
+                    isAddClear = false,
                     options = OrderMethod.entries.map { it.description },
                     selected = selectedOrderMethod.description
                 ) {
@@ -186,6 +187,7 @@ fun FilterChipWithDropdownMenu(
     label: String,
     isSelected: Boolean,
     selected: String?,
+    isAddClear: Boolean = true,
     onSelectedChanged: (String?) -> Unit,
 ) {
     var distanceMenuExpanded by remember { mutableStateOf(false) }
@@ -210,7 +212,7 @@ fun FilterChipWithDropdownMenu(
                 )
             }
         }
-        if (isSelected) {
+        if (isAddClear && isSelected) {
             DropdownMenuItem(
                 text = { Text(text = stringResource(R.string.filter_clear)) },
                 leadingIcon = {
