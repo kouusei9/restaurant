@@ -1,5 +1,6 @@
 package com.kouusei.restaurant.presentation.favoriteview
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kouusei.restaurant.data.api.HotPepperGourmetRepository
@@ -18,6 +19,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+const val TAG = "FavoriteShopsModel"
+
 @HiltViewModel
 class FavoriteShopsModel @Inject constructor(
     val favoriteShopRepository: FavoriteShopRepository,
@@ -25,6 +28,7 @@ class FavoriteShopsModel @Inject constructor(
 ) : ViewModel() {
 
     private var _shopIds = MutableStateFlow<Set<FavoriteShop>>(emptySet())
+    val shopIds = _shopIds.asStateFlow()
 
     private val _shops = MutableStateFlow<List<FavoriteShopSummary>>(emptyList())
 
@@ -44,6 +48,7 @@ class FavoriteShopsModel @Inject constructor(
                 viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet()
             ).collect {
                 _shopIds.value = it
+                Log.d(TAG, ": _shopIds.value = $it")
                 loadShops(it.map { it.shopId }.toSet())
             }
         }
@@ -59,10 +64,6 @@ class FavoriteShopsModel @Inject constructor(
 
     fun getSuggestionsByKeyword(): List<String> {
         return _shops.value.map { it.shopSummary.name }.filter { it.contains(keyword.value) }
-    }
-
-    fun isFavorite(shopId: String): Boolean {
-        return _shopIds.value.find { it.shopId == shopId } != null
     }
 
     fun toggleFavorite(shopId: String) {
