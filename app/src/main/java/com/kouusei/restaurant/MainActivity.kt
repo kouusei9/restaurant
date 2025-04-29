@@ -166,8 +166,6 @@ fun AppNavGraph(
     val favoriteShopsModel: FavoriteShopsModel = viewModel()
     val favoriteKeyword by favoriteShopsModel.keyword.collectAsState()
     val favoriteState by favoriteShopsModel.favoriteState.collectAsState()
-    val favoriteShopIds by favoriteShopsModel.shopIds.collectAsState()
-    val favoriteShops by favoriteShopsModel.shops.collectAsState()
 
     // request by name when keyword change
     val debounceQuery = remember { mutableStateOf("") }
@@ -274,7 +272,7 @@ fun AppNavGraph(
                                     navController.navigate(route = Detail(id = it).route)
                                 },
                                 onIsFavorite = {
-                                    favoriteShopIds.contains(it)
+                                    favoriteShopsModel.isFavorite(it)
                                 },
                                 isReloading = isReloading,
                                 onFavoriteToggled = {
@@ -381,7 +379,7 @@ fun AppNavGraph(
                                 isLoadingMore = isLoading,
                                 isReachEnd = isReachEnd,
                                 onIsFavorite = {
-                                    favoriteShopIds.contains(it)
+                                    favoriteShopsModel.isFavorite(it)
                                 },
                                 isReloading = isReloading,
                                 listState = listViewListState,
@@ -429,11 +427,7 @@ fun AppNavGraph(
                     onSearch = {
                         favoriteShopsModel.filter()
                     },
-                    suggestions = favoriteShops.filter {
-                        it.name.contains(
-                            favoriteKeyword
-                        )
-                    }.map { it.name }
+                    suggestions = favoriteShopsModel.getSuggestionsByKeyword()
 
                 )
                 FavoriteListScreen(
@@ -443,10 +437,13 @@ fun AppNavGraph(
                         navController.navigate(route = Detail(id = it).route)
                     },
                     onIsFavorite = {
-                        favoriteShopIds.contains(it)
+                        favoriteShopsModel.isFavorite(it)
                     },
                     onFavoriteToggled = {
                         favoriteShopsModel.toggleFavorite(it)
+                    },
+                    onOrderToggled = {
+                        favoriteShopsModel.toggleOrder()
                     }
                 )
             }
@@ -488,7 +485,7 @@ fun AppNavGraph(
                     id = shopId,
                     detailViewModel = detailViewModel,
                     onIsFavorite = {
-                        favoriteShopIds.contains(it)
+                        favoriteShopsModel.isFavorite(it)
                     },
                     onFavoriteToggled = {
                         favoriteShopsModel.toggleFavorite(it)

@@ -6,6 +6,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 class FavoriteShopRepositoryImpl @Inject constructor(
@@ -15,17 +17,34 @@ class FavoriteShopRepositoryImpl @Inject constructor(
         val FAVORITE_IDS = stringSetPreferencesKey("favorite_ids")
     }
 
-    private val favoriteShopsFlow: Flow<Set<String>> = dataStore.data
-        .map { prefs -> prefs[Keys.FAVORITE_IDS] ?: emptySet() }
+    private val json = Json
+
+    private val favoriteShopsFlow: Flow<Set<FavoriteShop>> = dataStore.data
+        .map { prefs ->
+            prefs[Keys.FAVORITE_IDS]?.mapNotNull {
+                runCatching { json.decodeFromString<FavoriteShop>(it) }.getOrNull()
+            }?.toSet() ?: emptySet()
+        }
 
     override suspend fun toggleFavorite(shopId: String) {
         dataStore.edit { prefs ->
-            val current = prefs[Keys.FAVORITE_IDS] ?: emptySet()
-            prefs[Keys.FAVORITE_IDS] = if (shopId in current) current - shopId else current + shopId
+            val current: MutableSet<FavoriteShop> = prefs[Keys.FAVORITE_IDS]
+                ?.mapNotNull { runCatching { json.decodeFromString<FavoriteShop>(it) }.getOrNull() }
+                ?.toMutableSet()
+                ?: mutableSetOf()
+
+            val existing = current.find { it.shopId == shopId }
+            if (existing != null) {
+                current.remove(existing)
+            } else {
+                current.add(FavoriteShop(shopId = shopId, timestamp = System.currentTimeMillis()))
+            }
+
+            prefs[Keys.FAVORITE_IDS] = current.map { json.encodeToString(it) }.toSet()
         }
     }
 
-    override fun getAllFavoriteShopIds(): Flow<Set<String>> {
+    override fun getAllFavoriteShops(): Flow<Set<FavoriteShop>> {
         return favoriteShopsFlow
     }
 }

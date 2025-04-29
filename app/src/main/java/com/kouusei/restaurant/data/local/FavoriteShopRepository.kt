@@ -5,5 +5,5 @@ import kotlinx.coroutines.flow.Flow
 interface FavoriteShopRepository {
     suspend fun toggleFavorite(shopId: String)
 
-    fun getAllFavoriteShopIds(): Flow<Set<String>>
+    fun getAllFavoriteShops(): Flow<Set<FavoriteShop>>
 }

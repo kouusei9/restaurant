@@ -3,7 +3,7 @@ package com.kouusei.restaurant.presentation.favoriteview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kouusei.restaurant.data.api.HotPepperGourmetRepository
-import com.kouusei.restaurant.data.api.entities.Shop
+import com.kouusei.restaurant.data.local.FavoriteShop
 import com.kouusei.restaurant.data.local.FavoriteShopRepository
 import com.kouusei.restaurant.data.utils.ApiResult
 import com.kouusei.restaurant.presentation.mappers.toShopSummary
@@ -24,11 +24,9 @@ class FavoriteShopsModel @Inject constructor(
     val hotPepperGourmetRepository: HotPepperGourmetRepository
 ) : ViewModel() {
 
-    private var _shopIds = MutableStateFlow<Set<String>>(emptySet())
-    val shopIds = _shopIds.asStateFlow()
+    private var _shopIds = MutableStateFlow<Set<FavoriteShop>>(emptySet())
 
-    private val _shops = MutableStateFlow<List<Shop>>(emptyList())
-    val shops = _shops.asStateFlow()
+    private val _shops = MutableStateFlow<List<FavoriteShopSummary>>(emptyList())
 
     private val _favoriteState = MutableStateFlow<FavoriteState>(FavoriteState.Loading)
     val favoriteState = _favoriteState.asStateFlow()
@@ -42,20 +40,29 @@ class FavoriteShopsModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            favoriteShopRepository.getAllFavoriteShopIds().stateIn(
+            favoriteShopRepository.getAllFavoriteShops().stateIn(
                 viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet()
             ).collect {
                 _shopIds.value = it
-                loadShops(it)
+                loadShops(it.map { it.shopId }.toSet())
             }
         }
     }
 
     fun filter() {
         if (favoriteState.value is FavoriteState.Success) {
-            val filterShops = _shops.value.filter { it.name.contains(keyword.value) }.map { it.toShopSummary() }
+            val filterShops =
+                _shops.value.filter { it.shopSummary.name.contains(keyword.value) }
             _favoriteState.value = FavoriteState.Success(filterShops)
         }
+    }
+
+    fun getSuggestionsByKeyword(): List<String> {
+        return _shops.value.map { it.shopSummary.name }.filter { it.contains(keyword.value) }
+    }
+
+    fun isFavorite(shopId: String): Boolean {
+        return _shopIds.value.find { it.shopId == shopId } != null
     }
 
     fun toggleFavorite(shopId: String) {
@@ -64,6 +71,14 @@ class FavoriteShopsModel @Inject constructor(
                 favoriteShopRepository.toggleFavorite(shopId)
             }
         }
+    }
+
+    fun toggleOrder() {
+        if (favoriteState.value is FavoriteState.Success) {
+            _favoriteState.value =
+                FavoriteState.Success((favoriteState.value as FavoriteState.Success).shops.reversed())
+        }
+
     }
 
     private suspend fun loadShops(ids: Set<String>) {
@@ -83,9 +98,18 @@ class FavoriteShopsModel @Inject constructor(
                     _shops.value = emptyList()
                     _favoriteState.value = FavoriteState.Empty
                 } else {
+                    val favoriteShops = result.data.map { it.toShopSummary() }
+                        .map { shopSummary ->
+                            FavoriteShopSummary(
+                                shopSummary,
+                                _shopIds.value.find { it.shopId == shopSummary.id }?.timestamp
+                                    ?: System.currentTimeMillis()
+                            )
+                        }.sortedBy { it.timestamp }
                     _favoriteState.value =
-                        FavoriteState.Success(result.data.map { it.toShopSummary() })
-                    _shops.value = result.data
+                        FavoriteState.Success(favoriteShops)
+
+                    _shops.value = favoriteShops
                 }
             }
         }
