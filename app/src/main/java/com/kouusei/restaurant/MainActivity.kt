@@ -223,6 +223,7 @@ fun AppNavGraph(
                                 restaurantViewModel.reloadShopList()
                                 scope.launch {
                                     listViewListState.animateScrollToItem(0)
+                                    mapViewListState.animateScrollToItem(0)
                                 }
                             },
                             suggestions = shopNames
@@ -233,18 +234,21 @@ fun AppNavGraph(
                                 restaurantViewModel.onDistanceRangeChange(it)
                                 scope.launch {
                                     listViewListState.animateScrollToItem(0)
+                                    mapViewListState.animateScrollToItem(0)
                                 }
                             },
                             onOrderMethodChange = {
                                 restaurantViewModel.onOrderMethodChange(it)
                                 scope.launch {
                                     listViewListState.animateScrollToItem(0)
+                                    mapViewListState.animateScrollToItem(0)
                                 }
                             },
                             onFilterChange = {
                                 restaurantViewModel.toggleFilter(it)
                                 scope.launch {
                                     listViewListState.animateScrollToItem(0)
+                                    mapViewListState.animateScrollToItem(0)
                                 }
                             },
                             selectedDistance = distanceRange,
@@ -256,6 +260,7 @@ fun AppNavGraph(
                                 restaurantViewModel.onGenreChange(it)
                                 scope.launch {
                                     listViewListState.animateScrollToItem(0)
+                                    mapViewListState.animateScrollToItem(0)
                                 }
                             },
                         )
@@ -285,6 +290,10 @@ fun AppNavGraph(
                                 },
                                 onSearch = {
                                     restaurantViewModel.reloadShopList()
+                                    scope.launch {
+                                        listViewListState.animateScrollToItem(0)
+                                        mapViewListState.animateScrollToItem(0)
+                                    }
                                 },
                                 suggestions = shopNames,
                             )
