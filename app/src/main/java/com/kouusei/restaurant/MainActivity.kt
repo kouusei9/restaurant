@@ -25,12 +25,14 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -68,7 +70,8 @@ import com.kouusei.restaurant.presentation.ErrorScreen
 import com.kouusei.restaurant.presentation.LoadingScreen
 import com.kouusei.restaurant.presentation.RestaurantViewModel
 import com.kouusei.restaurant.presentation.RestaurantViewState
-import com.kouusei.restaurant.presentation.common.FilterView
+import com.kouusei.restaurant.presentation.common.FilterViewBottom
+import com.kouusei.restaurant.presentation.common.FilterViewTop
 import com.kouusei.restaurant.presentation.detailview.DetailView
 import com.kouusei.restaurant.presentation.detailview.DetailViewModel
 import com.kouusei.restaurant.presentation.favoriteview.FavoriteListScreen
@@ -180,10 +183,6 @@ fun AppNavGraph(
 
     val state by restaurantViewModel.restaurantViewState.collectAsState()
 
-    val distanceRange by restaurantViewModel.distanceRange.collectAsState()
-    val orderMethod by restaurantViewModel.orderMethod.collectAsState()
-    val genre by restaurantViewModel.genre.collectAsState()
-    val searchFilters by restaurantViewModel.searchFilters.collectAsState()
 
     val isLoading by restaurantViewModel.isLoading.collectAsState()
     val isReloading by restaurantViewModel.isReloading.collectAsState()
@@ -193,19 +192,11 @@ fun AppNavGraph(
     val selectedShop by restaurantViewModel.selectedShop.collectAsState()
 
     val mapViewListState = rememberLazyListState()
-    val filterListState = rememberLazyListState()
+    val filterBottomListState = rememberLazyListState()
+    val filterTopListState = rememberLazyListState()
     val listViewListState = rememberLazyListState()
 
     val infiniteTransition = rememberInfiniteTransition()
-
-    // address status
-    val largeAddressList by restaurantViewModel.largeAddressList.collectAsState()
-    val selectedLargeAddress by restaurantViewModel.selectedLargeAddress.collectAsState()
-    val middleAddressList by restaurantViewModel.middleAddressList.collectAsState()
-    val selectedMiddleAddress by restaurantViewModel.selectedMiddleAddress.collectAsState()
-    val smallAddressList by restaurantViewModel.smallAddressList.collectAsState()
-    val selectedSmallAddress by restaurantViewModel.selectedSmallAddress.collectAsState()
-    val isAddressSelected by restaurantViewModel.isSelectedAddress.collectAsState()
 
     val scope = rememberCoroutineScope()
     val refreshListState = {
@@ -222,101 +213,18 @@ fun AppNavGraph(
                 }
 
                 is RestaurantViewState.Empty, is RestaurantViewState.Success, is RestaurantViewState.Error -> {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(
                                 bottom = innerPadding.calculateBottomPadding()
                             )
                     ) {
-                        RestaurantTopBar(
-                            keyword = keyword,
-                            onKeywordChange = {
-                                restaurantViewModel.onKeyWordChange(it)
-                            },
-                            onSearch = {
-                                restaurantViewModel.reloadShopList()
-                                refreshListState()
-                            },
-                            suggestions = shopNames
-                        )
-
-                        FilterView(
-                            onDistanceChange = {
-                                restaurantViewModel.onDistanceRangeChange(it)
-                                refreshListState()
-                            },
-                            onOrderMethodChange = {
-                                restaurantViewModel.onOrderMethodChange(it)
-                                refreshListState()
-                            },
-                            onFilterChange = {
-                                restaurantViewModel.toggleFilter(it)
-                                refreshListState()
-                            },
-                            selectedDistance = distanceRange,
-                            selectedOrderMethod = orderMethod,
-                            state = searchFilters,
-                            listState = filterListState,
-                            selectedGenre = genre,
-                            onSelectedGenreChange = {
-                                restaurantViewModel.onGenreChange(it)
-                                refreshListState()
-                            },
-                            largeAddress = largeAddressList,
-                            selectedLarge = selectedLargeAddress,
-                            onLargeSelect = {
-                                restaurantViewModel.onSelectedLargeAddressChange(it)
-                                restaurantViewModel.onSelectedMiddleAddressChange(null)
-                                restaurantViewModel.onSelectedSmallAddressChange(null)
-                            },
-                            middleAddress = middleAddressList,
-                            selectedMiddle = selectedMiddleAddress,
-                            onMiddleSelect = {
-                                restaurantViewModel.onSelectedMiddleAddressChange(it)
-                                restaurantViewModel.onSelectedSmallAddressChange(null)
-                            },
-                            smallAddress = smallAddressList,
-                            selectedSmall = selectedSmallAddress,
-                            onSmallSelect = {
-                                restaurantViewModel.onSelectedSmallAddressChange(it)
-                            },
-                            isAddressSelected = isAddressSelected,
-                            onAddressSelectedConfirm = {
-                                restaurantViewModel.onSelectedAddressChange(true)
-                                restaurantViewModel.reloadShopList()
-                                refreshListState()
-                            },
-                            bottomPadding = innerPadding.calculateBottomPadding(),
-                            topPadding = innerPadding.calculateTopPadding(),
-                            onAddressSelectedReset = {
-                                if (isAddressSelected) {
-                                    restaurantViewModel.onSelectedAddressChange(false)
-                                    restaurantViewModel.resetFilterAndReload()
-                                    refreshListState()
-                                }
-                            }
-                        )
-
-                        if (state is RestaurantViewState.Success) {
-                            MapView(
-                                cameraPositionState = cameraPositionState,
-                                listState = mapViewListState,
-                                viewState = state as RestaurantViewState.Success,
-                                selectedShop = selectedShop,
-                                onSelectedShopChange = {
-                                    restaurantViewModel.onSelectedShopChange(it)
-                                },
-                                onNavDetail = {
-                                    navController.navigate(route = Detail(id = it).route)
-                                },
-                                onIsFavorite = { shopId ->
-                                    shopIds.value.find { it.shopId == shopId } != null
-                                },
-                                isReloading = isReloading,
-                                onFavoriteToggled = {
-                                    favoriteShopsModel.toggleFavorite(it)
-                                },
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            RestaurantTopBar(
                                 keyword = keyword,
                                 onKeywordChange = {
                                     restaurantViewModel.onKeyWordChange(it)
@@ -325,15 +233,61 @@ fun AppNavGraph(
                                     restaurantViewModel.reloadShopList()
                                     refreshListState()
                                 },
-                                suggestions = shopNames,
+                                suggestions = shopNames
                             )
-                        } else if (state is RestaurantViewState.Empty) {
-                            EmptyScreen {
-                                restaurantViewModel.resetFilterAndReload()
+                            AddTopFilterView(
+                                restaurantViewModel = restaurantViewModel,
+                                refreshListState = {
+                                    refreshListState()
+                                },
+                                innerPadding = innerPadding,
+                                listState = filterTopListState
+                            )
+                            if (state is RestaurantViewState.Success) {
+                                MapView(
+                                    cameraPositionState = cameraPositionState,
+                                    listState = mapViewListState,
+                                    viewState = state as RestaurantViewState.Success,
+                                    selectedShop = selectedShop,
+                                    onSelectedShopChange = {
+                                        restaurantViewModel.onSelectedShopChange(it)
+                                    },
+                                    onNavDetail = {
+                                        navController.navigate(route = Detail(id = it).route)
+                                    },
+                                    onIsFavorite = { shopId ->
+                                        shopIds.value.find { it.shopId == shopId } != null
+                                    },
+                                    isReloading = isReloading,
+                                    onFavoriteToggled = {
+                                        favoriteShopsModel.toggleFavorite(it)
+                                    },
+                                    keyword = keyword,
+                                    onKeywordChange = {
+                                        restaurantViewModel.onKeyWordChange(it)
+                                    },
+                                    onSearch = {
+                                        restaurantViewModel.reloadShopList()
+                                        refreshListState()
+                                    },
+                                    suggestions = shopNames,
+                                )
+                            } else if (state is RestaurantViewState.Empty) {
+                                EmptyScreen {
+                                    restaurantViewModel.resetFilterAndReload()
+                                }
+                            } else {
+                                ErrorScreen((state as RestaurantViewState.Error).message)
                             }
-                        } else {
-                            ErrorScreen((state as RestaurantViewState.Error).message)
                         }
+                        AddBottomFilterView(
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                            restaurantViewModel = restaurantViewModel,
+                            refreshListState = {
+                                refreshListState()
+                            },
+                            listState = filterBottomListState
+                        )
                     }
                 }
 
@@ -354,114 +308,79 @@ fun AppNavGraph(
                 }
 
                 is RestaurantViewState.Empty, is RestaurantViewState.Success, is RestaurantViewState.Error -> {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(
                                 bottom = innerPadding.calculateBottomPadding()
                             )
                     ) {
-                        RestaurantTopBar(
-                            keyword = keyword,
-                            onKeywordChange = {
-                                restaurantViewModel.onKeyWordChange(it)
-                            },
-                            onSearch = {
-                                restaurantViewModel.reloadShopList()
-                                refreshListState()
-                            },
-                            suggestions = shopNames
-                        )
-
-                        FilterView(
-                            onDistanceChange = {
-                                restaurantViewModel.onDistanceRangeChange(it)
-                                refreshListState()
-                            },
-                            onOrderMethodChange = {
-                                restaurantViewModel.onOrderMethodChange(it)
-                                refreshListState()
-                            },
-                            onFilterChange = {
-                                restaurantViewModel.toggleFilter(it)
-                                refreshListState()
-                            },
-                            selectedDistance = distanceRange,
-                            selectedOrderMethod = orderMethod,
-                            state = searchFilters,
-                            listState = filterListState,
-                            selectedGenre = genre,
-                            onSelectedGenreChange = {
-                                restaurantViewModel.onGenreChange(it)
-                                refreshListState()
-                            },
-                            largeAddress = largeAddressList,
-                            selectedLarge = selectedLargeAddress,
-                            onLargeSelect = {
-                                restaurantViewModel.onSelectedLargeAddressChange(it)
-                                restaurantViewModel.onSelectedMiddleAddressChange(null)
-                                restaurantViewModel.onSelectedSmallAddressChange(null)
-                            },
-                            middleAddress = middleAddressList,
-                            selectedMiddle = selectedMiddleAddress,
-                            onMiddleSelect = {
-                                restaurantViewModel.onSelectedMiddleAddressChange(it)
-                                restaurantViewModel.onSelectedSmallAddressChange(null)
-                            },
-                            smallAddress = smallAddressList,
-                            selectedSmall = selectedSmallAddress,
-                            onSmallSelect = {
-                                restaurantViewModel.onSelectedSmallAddressChange(it)
-                            },
-                            isAddressSelected = isAddressSelected,
-                            onAddressSelectedConfirm = {
-                                restaurantViewModel.onSelectedAddressChange(true)
-                                restaurantViewModel.reloadShopList()
-                                refreshListState()
-                            },
-                            bottomPadding = innerPadding.calculateBottomPadding(),
-                            topPadding = innerPadding.calculateTopPadding(),
-                            onAddressSelectedReset = {
-                                if (isAddressSelected) {
-                                    restaurantViewModel.onSelectedAddressChange(false)
-                                    restaurantViewModel.resetFilterAndReload()
-                                    refreshListState()
-                                }
-                            }
-                        )
-
-                        if (state is RestaurantViewState.Success) {
-                            RestaurantList(
-                                restaurantViewState = state as RestaurantViewState.Success,
-                                onNavDetail = {
-                                    navController.navigate(route = Detail(id = it).route)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            RestaurantTopBar(
+                                keyword = keyword,
+                                onKeywordChange = {
+                                    restaurantViewModel.onKeyWordChange(it)
                                 },
-                                onLoadMore = {
-                                    restaurantViewModel.loadMore()
-                                },
-                                isLoadingMore = isLoading,
-                                isReachEnd = isReachEnd,
-                                onIsFavorite = { shopId ->
-                                    shopIds.value.find { it.shopId == shopId } != null
-                                },
-                                isReloading = isReloading,
-                                listState = listViewListState,
-                                onFavoriteToggled = {
-                                    favoriteShopsModel.toggleFavorite(it)
-                                },
-                                onRefresh = {
+                                onSearch = {
                                     restaurantViewModel.reloadShopList()
                                     refreshListState()
-                                }
+                                },
+                                suggestions = shopNames
                             )
-                        } else if (state is RestaurantViewState.Empty) {
-                            EmptyScreen {
-                                restaurantViewModel.resetFilterAndReload()
+                            AddTopFilterView(
+                                restaurantViewModel = restaurantViewModel,
+                                refreshListState = {
+                                    refreshListState()
+                                },
+                                innerPadding = innerPadding,
+                                listState = filterTopListState
+                            )
+                            if (state is RestaurantViewState.Success) {
+                                RestaurantList(
+                                    restaurantViewState = state as RestaurantViewState.Success,
+                                    onNavDetail = {
+                                        navController.navigate(route = Detail(id = it).route)
+                                    },
+                                    onLoadMore = {
+                                        restaurantViewModel.loadMore()
+                                    },
+                                    isLoadingMore = isLoading,
+                                    isReachEnd = isReachEnd,
+                                    onIsFavorite = { shopId ->
+                                        shopIds.value.find { it.shopId == shopId } != null
+                                    },
+                                    isReloading = isReloading,
+                                    listState = listViewListState,
+                                    onFavoriteToggled = {
+                                        favoriteShopsModel.toggleFavorite(it)
+                                    },
+                                    onRefresh = {
+                                        restaurantViewModel.reloadShopList()
+                                        refreshListState()
+                                    }
+                                )
+                            } else if (state is RestaurantViewState.Empty) {
+                                EmptyScreen {
+                                    restaurantViewModel.resetFilterAndReload()
+                                }
+                            } else {
+                                ErrorScreen((state as RestaurantViewState.Error).message)
                             }
-                        } else {
-                            ErrorScreen((state as RestaurantViewState.Error).message)
                         }
+
+                        AddBottomFilterView(
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                            restaurantViewModel = restaurantViewModel,
+                            refreshListState = {
+                                refreshListState()
+                            },
+                            listState = filterBottomListState
+                        )
                     }
+
                 }
 
                 is RestaurantViewState.RequestPermission -> {
@@ -561,6 +480,100 @@ fun AppNavGraph(
             }
         }
     }
+}
+
+@Composable
+fun AddTopFilterView(
+    restaurantViewModel: RestaurantViewModel,
+    refreshListState: () -> Unit,
+    innerPadding: PaddingValues,
+    listState: LazyListState,
+) {
+    // address status
+    val largeAddressList by restaurantViewModel.largeAddressList.collectAsState()
+    val selectedLargeAddress by restaurantViewModel.selectedLargeAddress.collectAsState()
+    val middleAddressList by restaurantViewModel.middleAddressList.collectAsState()
+    val selectedMiddleAddress by restaurantViewModel.selectedMiddleAddress.collectAsState()
+    val smallAddressList by restaurantViewModel.smallAddressList.collectAsState()
+    val selectedSmallAddress by restaurantViewModel.selectedSmallAddress.collectAsState()
+    val isAddressSelected by restaurantViewModel.isSelectedAddress.collectAsState()
+
+    // filter status
+    val distanceRange by restaurantViewModel.distanceRange.collectAsState()
+    val orderMethod by restaurantViewModel.orderMethod.collectAsState()
+    val genre by restaurantViewModel.genre.collectAsState()
+
+    FilterViewTop(
+        onDistanceChange = {
+            restaurantViewModel.onDistanceRangeChange(it)
+            refreshListState()
+        },
+        onOrderMethodChange = {
+            restaurantViewModel.onOrderMethodChange(it)
+            refreshListState()
+        },
+        selectedDistance = distanceRange,
+        selectedOrderMethod = orderMethod,
+        listState = listState,
+        selectedGenre = genre,
+        onSelectedGenreChange = {
+            restaurantViewModel.onGenreChange(it)
+            refreshListState()
+        },
+        largeAddress = largeAddressList,
+        selectedLarge = selectedLargeAddress,
+        onLargeSelect = {
+            restaurantViewModel.onSelectedLargeAddressChange(it)
+            restaurantViewModel.onSelectedMiddleAddressChange(null)
+            restaurantViewModel.onSelectedSmallAddressChange(null)
+        },
+        middleAddress = middleAddressList,
+        selectedMiddle = selectedMiddleAddress,
+        onMiddleSelect = {
+            restaurantViewModel.onSelectedMiddleAddressChange(it)
+            restaurantViewModel.onSelectedSmallAddressChange(null)
+        },
+        smallAddress = smallAddressList,
+        selectedSmall = selectedSmallAddress,
+        onSmallSelect = {
+            restaurantViewModel.onSelectedSmallAddressChange(it)
+        },
+        isAddressSelected = isAddressSelected,
+        onAddressSelectedConfirm = {
+            restaurantViewModel.onSelectedAddressChange(true)
+            restaurantViewModel.reloadShopList()
+            refreshListState()
+        },
+        bottomPadding = innerPadding.calculateBottomPadding(),
+        topPadding = innerPadding.calculateTopPadding(),
+        onAddressSelectedReset = {
+            if (isAddressSelected) {
+                restaurantViewModel.onSelectedAddressChange(false)
+                restaurantViewModel.reloadShopList()
+                refreshListState()
+            }
+        }
+    )
+}
+
+@Composable
+fun AddBottomFilterView(
+    modifier: Modifier = Modifier,
+    restaurantViewModel: RestaurantViewModel,
+    refreshListState: () -> Unit,
+    listState: LazyListState,
+) {
+    val searchFilters by restaurantViewModel.searchFilters.collectAsState()
+
+    FilterViewBottom(
+        modifier = modifier.background(MaterialTheme.colorScheme.background),
+        onFilterChange = {
+            restaurantViewModel.toggleFilter(it)
+            refreshListState()
+        },
+        state = searchFilters,
+        listState = listState
+    )
 }
 
 @Composable

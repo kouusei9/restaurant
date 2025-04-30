@@ -107,16 +107,13 @@ enum class Filter(val value: String, val description: String) {
 }
 
 @Composable
-fun FilterView(
-    filterList: List<Filter> = Filter.entries,
+fun FilterViewTop(
     onDistanceChange: (DistanceRange?) -> Unit,
     selectedOrderMethod: OrderMethod,
     onOrderMethodChange: (OrderMethod) -> Unit,
     selectedGenre: Genre?,
     onSelectedGenreChange: (Genre?) -> Unit,
-    onFilterChange: (Filter) -> Unit,
     selectedDistance: DistanceRange?,
-    state: SearchFilters,
     listState: LazyListState,
     largeAddress: List<Address>,
     selectedLarge: Address?,
@@ -210,6 +207,24 @@ fun FilterView(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun FilterViewBottom(
+    modifier: Modifier = Modifier,
+    filterList: List<Filter> = Filter.entries,
+    onFilterChange: (Filter) -> Unit,
+    state: SearchFilters,
+    listState: LazyListState,
+) {
+    LazyRow(
+        state = listState,
+        modifier = modifier
+            .padding(start = 8.dp, end = 8.dp)
+            .fillMaxWidth()
+            .height(40.dp)
+    ) {
         items(filterList) { item ->
             FilterChip(
                 label = item.description,

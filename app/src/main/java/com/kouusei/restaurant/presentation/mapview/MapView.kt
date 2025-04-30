@@ -101,6 +101,7 @@ fun MapView(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .padding(bottom = 40.dp)
             .background(color = MaterialTheme.colorScheme.background)
     ) {
         RestaurantTopBar(
