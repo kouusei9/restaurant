@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">舌上</string>
+    <string name="app_name">レストランメモ</string>
     <!--    permission  -->
     <string name="permission_request">位置情報を許可する</string>
     <string name="permission_deny">位置情報へのアクセスを許可してください。</string>
