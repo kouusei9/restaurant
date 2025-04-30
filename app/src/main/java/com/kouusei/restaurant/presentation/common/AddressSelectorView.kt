@@ -56,19 +56,25 @@ fun InlineAddressSelector(
     height: Dp
 ) {
     val weightLarge by animateFloatAsState(
-        targetValue = if (selectedLarge != null) .5f else 2f,
-        animationSpec = tween(durationMillis = 500),
+        targetValue = if (largeAddress.isEmpty()) 1f else largeAddress.maxOf { it.name.length }.toFloat(),
+        animationSpec = tween(durationMillis = 300),
         label = "weightLarge"
     )
 
     val weightMiddle by animateFloatAsState(
-        targetValue = if (selectedMiddle != null) 2f else 2f,
-        animationSpec = tween(durationMillis = 500),
+        targetValue = if (middleAddress.isEmpty()) 1f else middleAddress.maxOf { it.name.length }.toFloat(),
+        animationSpec = tween(durationMillis = 300),
         label = "weightMiddle"
     )
+
+    val weightSmall by animateFloatAsState(
+        targetValue = if (smallAddress.isEmpty()) 1f else smallAddress.maxOf { it.name.length }.toFloat(),
+        animationSpec = tween(durationMillis = 300),
+        label = "weightSmall"
+    )
+
     Column(
         modifier = modifier
-            .background(color = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
@@ -128,8 +134,8 @@ fun InlineAddressSelector(
             // 小地址选择
             selectedMiddle?.let {
                 AddressColumn(
-                    modifier = Modifier.weight(1f),
-                    title = "エリア",
+                    modifier = Modifier.weight(weightSmall),
+                    title = "場所",
                     options = smallAddress,
                     selected = selectedSmall,
                     onSelect = onSmallSelect
@@ -141,13 +147,21 @@ fun InlineAddressSelector(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .height(60.dp),
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(
-                modifier = Modifier.padding(end = 8.dp),
-                onClick = onReset
+
+            Row(
+                modifier = Modifier
+                    .clickable {
+                        onReset()
+                    },
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Icon(
+                    Icons.Filled.Clear, contentDescription = "Clear",
+                    tint = MaterialTheme.colorScheme.primary
+                )
                 Text(text = stringResource(R.string.filter_clear))
             }
 
@@ -216,7 +230,7 @@ fun AddressColumn(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        address.name,
+                        text = address.name, fontSize = 12.sp,
                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Gray
                     )
                 }
@@ -254,6 +268,6 @@ fun AddressSelectorViewPreview() {
         ),
         selectedSmall = null,
         onSmallSelect = { /* TODO */ },
-        height = 200.dp,
+        height = 800.dp,
     )
 }

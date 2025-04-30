@@ -266,7 +266,7 @@ fun AreaFilterChipWithDropdownMenu(
     DropdownMenu(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.background)
             .height(screenHeight - bottomPadding - topPadding),
         expanded = areaExpand,
         onDismissRequest = { areaExpand = false }
