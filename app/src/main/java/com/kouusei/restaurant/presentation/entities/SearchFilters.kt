@@ -32,18 +32,18 @@ data class SearchFilters(
     }
 
     fun toQueryMap(): Map<String, String> {
-        return mapOf(
-            "course" to if (course) "1" else "0",
-            "free_drink" to if (freeDrink) "1" else "0",
-            "free_food" to if (freeFood) "1" else "0",
-            "private_room" to if (privateRoom) "1" else "0",
-            "wifi" to if (wifi) "1" else "0",
-            "card" to if (card) "1" else "0",
-            "non_smoking" to if (nonSmoking) "1" else "0",
-            "parking" to if (parking) "1" else "0",
-            "lunch" to if (lunch) "1" else "0",
-            "english" to if (english) "1" else "0",
-            "pet" to if (pet) "1" else "0",
-        )
+        val map = mutableMapOf<String, String>()
+        if (course) map["course"] = "1"
+        if (freeDrink) map["free_drink"] = "1"
+        if (freeFood) map["free_food"] = "1"
+        if (privateRoom) map["private_room"] = "1"
+        if (wifi) map["wifi"] = "1"
+        if (card) map["card"] = "1"
+        if (nonSmoking) map["non_smoking"] = "1"
+        if (parking) map["parking"] = "1"
+        if (lunch) map["lunch"] = "1"
+        if (english) map["english"] = "1"
+        if (pet) map["pet"] = "1"
+        return map
     }
 }

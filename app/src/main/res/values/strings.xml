@@ -17,6 +17,8 @@
     <string name="filter_clear">リセット</string>
     <string name="filter_genre">ジャンル</string>
     <string name="filter_distance">現在地</string>
+    <string name="filter_area">エリア</string>
+    <string name="filter_confirm">確認</string>
 
     <!--    ListView -->
     <string name="list_empty">未発見の世界へようこそう</string>

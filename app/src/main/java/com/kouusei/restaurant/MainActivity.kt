@@ -198,6 +198,15 @@ fun AppNavGraph(
 
     val infiniteTransition = rememberInfiniteTransition()
 
+    // address status
+    val largeAddressList by restaurantViewModel.largeAddressList.collectAsState()
+    val selectedLargeAddress by restaurantViewModel.selectedLargeAddress.collectAsState()
+    val middleAddressList by restaurantViewModel.middleAddressList.collectAsState()
+    val selectedMiddleAddress by restaurantViewModel.selectedMiddleAddress.collectAsState()
+    val smallAddressList by restaurantViewModel.smallAddressList.collectAsState()
+    val selectedSmallAddress by restaurantViewModel.selectedSmallAddress.collectAsState()
+    val isAddressSelected by restaurantViewModel.isSelectedAddress.collectAsState()
+
     val scope = rememberCoroutineScope()
     val refreshListState = {
         scope.launch {
@@ -254,6 +263,39 @@ fun AppNavGraph(
                                 restaurantViewModel.onGenreChange(it)
                                 refreshListState()
                             },
+                            largeAddress = largeAddressList,
+                            selectedLarge = selectedLargeAddress,
+                            onLargeSelect = {
+                                restaurantViewModel.onSelectedLargeAddressChange(it)
+                                restaurantViewModel.onSelectedMiddleAddressChange(null)
+                                restaurantViewModel.onSelectedSmallAddressChange(null)
+                            },
+                            middleAddress = middleAddressList,
+                            selectedMiddle = selectedMiddleAddress,
+                            onMiddleSelect = {
+                                restaurantViewModel.onSelectedMiddleAddressChange(it)
+                                restaurantViewModel.onSelectedSmallAddressChange(null)
+                            },
+                            smallAddress = smallAddressList,
+                            selectedSmall = selectedSmallAddress,
+                            onSmallSelect = {
+                                restaurantViewModel.onSelectedSmallAddressChange(it)
+                            },
+                            isAddressSelected = isAddressSelected,
+                            onAddressSelectedConfirm = {
+                                restaurantViewModel.onSelectedAddressChange(true)
+                                restaurantViewModel.reloadShopList()
+                                refreshListState()
+                            },
+                            bottomPadding = innerPadding.calculateBottomPadding(),
+                            topPadding = innerPadding.calculateTopPadding(),
+                            onAddressSelectedReset = {
+                                if (isAddressSelected) {
+                                    restaurantViewModel.onSelectedAddressChange(false)
+                                    restaurantViewModel.resetFilterAndReload()
+                                    refreshListState()
+                                }
+                            }
                         )
 
                         if (state is RestaurantViewState.Success) {
@@ -353,6 +395,39 @@ fun AppNavGraph(
                                 restaurantViewModel.onGenreChange(it)
                                 refreshListState()
                             },
+                            largeAddress = largeAddressList,
+                            selectedLarge = selectedLargeAddress,
+                            onLargeSelect = {
+                                restaurantViewModel.onSelectedLargeAddressChange(it)
+                                restaurantViewModel.onSelectedMiddleAddressChange(null)
+                                restaurantViewModel.onSelectedSmallAddressChange(null)
+                            },
+                            middleAddress = middleAddressList,
+                            selectedMiddle = selectedMiddleAddress,
+                            onMiddleSelect = {
+                                restaurantViewModel.onSelectedMiddleAddressChange(it)
+                                restaurantViewModel.onSelectedSmallAddressChange(null)
+                            },
+                            smallAddress = smallAddressList,
+                            selectedSmall = selectedSmallAddress,
+                            onSmallSelect = {
+                                restaurantViewModel.onSelectedSmallAddressChange(it)
+                            },
+                            isAddressSelected = isAddressSelected,
+                            onAddressSelectedConfirm = {
+                                restaurantViewModel.onSelectedAddressChange(true)
+                                restaurantViewModel.reloadShopList()
+                                refreshListState()
+                            },
+                            bottomPadding = innerPadding.calculateBottomPadding(),
+                            topPadding = innerPadding.calculateTopPadding(),
+                            onAddressSelectedReset = {
+                                if (isAddressSelected) {
+                                    restaurantViewModel.onSelectedAddressChange(false)
+                                    restaurantViewModel.resetFilterAndReload()
+                                    refreshListState()
+                                }
+                            }
                         )
 
                         if (state is RestaurantViewState.Success) {

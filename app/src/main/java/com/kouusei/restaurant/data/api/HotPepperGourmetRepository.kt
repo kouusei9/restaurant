@@ -1,5 +1,6 @@
 package com.kouusei.restaurant.data.api
 
+import com.kouusei.restaurant.data.api.entities.Address
 import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.api.entities.ShopName
@@ -20,6 +21,9 @@ interface HotPepperGourmetRepository {
         start: Int = 1,
         order: Int?,
         genre: String?,
+        largeArea: String?,
+        middleArea: String?,
+        smallArea: String?,
         filters: Map<String, String>
     ): ApiResult<Results>
 
@@ -40,4 +44,11 @@ interface HotPepperGourmetRepository {
      * out: list of shops detail.
      */
     suspend fun getShopsByIds(ids: Set<String>): ApiResult<List<Shop>>
+
+    suspend fun getLargeArea(): ApiResult<List<Address>>
+
+    suspend fun getMiddleArea(largeArea: String): ApiResult<List<Address>>
+
+    suspend fun getSmallArea(middleArea: String): ApiResult<List<Address>>
+
 }

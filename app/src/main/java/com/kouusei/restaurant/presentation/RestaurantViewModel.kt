@@ -7,6 +7,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.kouusei.restaurant.data.api.HotPepperGourmetRepository
+import com.kouusei.restaurant.data.api.entities.Address
 import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.utils.ApiResult
 import com.kouusei.restaurant.presentation.common.DistanceRange
@@ -77,10 +78,111 @@ class RestaurantViewModel @Inject constructor(
     private val _selectedShop = MutableStateFlow<ShopSummary?>(null)
     val selectedShop: StateFlow<ShopSummary?> = _selectedShop.asStateFlow()
 
+    private val _largeAddressList = MutableStateFlow<List<Address>>(emptyList<Address>())
+    val largeAddressList = _largeAddressList.asStateFlow()
+    private val _selectedLargeAddress = MutableStateFlow<Address?>(null)
+    val selectedLargeAddress = _selectedLargeAddress.asStateFlow()
+    fun onSelectedLargeAddressChange(address: Address?) {
+        _selectedLargeAddress.value = address
+        loadMiddleAddressList()
+    }
+
+    fun loadLargeAddressList() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val result = gourmetRepository.getLargeArea()
+                when (result) {
+                    is ApiResult.Error -> {
+                        Log.d(TAG, "loadLargeAddressList: ${result.message}")
+                    }
+
+                    is ApiResult.Success -> {
+                        _largeAddressList.value = result.data
+                    }
+                }
+            }
+        }
+    }
+
+    private val _middleAddressList = MutableStateFlow<List<Address>>(emptyList<Address>())
+    val middleAddressList = _middleAddressList.asStateFlow()
+    private val _selectedMiddleAddress = MutableStateFlow<Address?>(null)
+    val selectedMiddleAddress = _selectedMiddleAddress.asStateFlow()
+    fun onSelectedMiddleAddressChange(address: Address?) {
+        _selectedMiddleAddress.value = address
+        loadSmallAddressList()
+    }
+
+    fun loadMiddleAddressList() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                if (selectedLargeAddress.value == null) {
+                    return@withContext
+                }
+                val result = gourmetRepository.getMiddleArea(
+                    largeArea = selectedLargeAddress.value!!.code
+                )
+                when (result) {
+                    is ApiResult.Error -> {
+                        Log.d(TAG, "loadMiddleAddressList: ${result.message}")
+                    }
+
+                    is ApiResult.Success -> {
+                        _middleAddressList.value = result.data
+                    }
+                }
+            }
+        }
+    }
+
+    private val _smallAddressList = MutableStateFlow<List<Address>>(emptyList<Address>())
+    val smallAddressList = _smallAddressList.asStateFlow()
+    private val _selectedSmallAddress = MutableStateFlow<Address?>(null)
+    val selectedSmallAddress = _selectedSmallAddress.asStateFlow()
+    fun onSelectedSmallAddressChange(address: Address?) {
+        _selectedSmallAddress.value = address
+    }
+
+    private val _isSelectedAddress = MutableStateFlow<Boolean>(false)
+    val isSelectedAddress = _isSelectedAddress.asStateFlow()
+    fun onSelectedAddressChange(isSelected: Boolean) {
+        _isSelectedAddress.value = isSelected
+        // address is conflict with distance range
+        _distanceRange.value = null
+    }
+
+    fun loadSmallAddressList() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                if (selectedMiddleAddress.value == null) {
+                    return@withContext
+                }
+                val result = gourmetRepository.getSmallArea(
+                    middleArea = selectedMiddleAddress.value!!.code
+                )
+                when (result) {
+                    is ApiResult.Error -> {
+                        Log.d(TAG, "loadSmallAddressList: ${result.message}")
+                    }
+
+                    is ApiResult.Success -> {
+                        _smallAddressList.value = result.data
+                    }
+                }
+            }
+        }
+    }
+
+    // load large address list by default
+    init {
+        loadLargeAddressList()
+    }
+
     private fun resetAllFilters() {
         _searchFilters.value = SearchFilters()
         _distanceRange.value = DistanceRange.RANGE_1000M
         _genres.value = null
+        _isSelectedAddress.value = false
     }
 
     fun onKeyWordChange(keyword: String) {
@@ -94,6 +196,8 @@ class RestaurantViewModel @Inject constructor(
 
     fun onDistanceRangeChange(distanceRange: DistanceRange?) {
         _distanceRange.value = distanceRange
+        // address is conflict with distance range
+        _isSelectedAddress.value = false
         reloadShopList()
     }
 
@@ -333,8 +437,21 @@ class RestaurantViewModel @Inject constructor(
         order: Int?,
         onResult: (ApiResult<Results>) -> Unit
     ) {
+        var largeArea: String? = null
+        var middleArea: String? = null
+        var smallArea: String? = null
+        if (isSelectedAddress.value) {
+            smallArea = selectedSmallAddress.value?.code
+            if (smallArea == null) {
+                middleArea = selectedMiddleAddress.value?.code
+                if (middleArea == null) {
+                    largeArea = selectedLargeAddress.value?.code
+                }
+            }
+        }
         withContext(Dispatchers.IO) {
             if (keyword.isNotEmpty()) {
+                // search with keyword
                 if (range == null) {
                     onResult(
                         gourmetRepository.searchShops(
@@ -345,7 +462,10 @@ class RestaurantViewModel @Inject constructor(
                             filters = searchFilters.value.toQueryMap(),
                             start = start,
                             order = order,
-                            genre = getGenreValue()
+                            genre = getGenreValue(),
+                            largeArea = largeArea,
+                            middleArea = middleArea,
+                            smallArea = smallArea
                         )
                     )
                 } else {
@@ -358,37 +478,65 @@ class RestaurantViewModel @Inject constructor(
                             filters = searchFilters.value.toQueryMap(),
                             start = start,
                             order = order,
-                            genre = getGenreValue()
+                            genre = getGenreValue(),
+                            largeArea = largeArea,
+                            middleArea = middleArea,
+                            smallArea = smallArea
                         )
                     )
                 }
-            } else if (range == null) {
-                _distanceRange.value = DistanceRange.RANGE_1000M
-                onResult(
-                    gourmetRepository.searchShops(
-                        keyword = keyword,
-                        lat = lat,
-                        lng = lng,
-                        range = distanceRange.value?.value,
-                        filters = searchFilters.value.toQueryMap(),
-                        start = start,
-                        order = order,
-                        genre = getGenreValue()
-                    )
-                )
             } else {
-                onResult(
-                    gourmetRepository.searchShops(
-                        keyword = keyword,
-                        lat = lat,
-                        lng = lng,
-                        range = distanceRange.value?.value,
-                        filters = searchFilters.value.toQueryMap(),
-                        start = start,
-                        order = order,
-                        genre = getGenreValue()
+                // keyword is empty
+                if (isSelectedAddress.value) {
+                    onResult(
+                        gourmetRepository.searchShops(
+                            keyword = keyword,
+                            lat = null,
+                            lng = null,
+                            range = null,
+                            filters = searchFilters.value.toQueryMap(),
+                            start = start,
+                            order = order,
+                            genre = getGenreValue(),
+                            largeArea = largeArea,
+                            middleArea = middleArea,
+                            smallArea = smallArea
+                        )
                     )
-                )
+                } else if (range == null) {
+                    _distanceRange.value = DistanceRange.RANGE_1000M
+                    onResult(
+                        gourmetRepository.searchShops(
+                            keyword = keyword,
+                            lat = lat,
+                            lng = lng,
+                            range = distanceRange.value?.value,
+                            filters = searchFilters.value.toQueryMap(),
+                            start = start,
+                            order = order,
+                            genre = getGenreValue(),
+                            largeArea = largeArea,
+                            middleArea = middleArea,
+                            smallArea = smallArea
+                        )
+                    )
+                } else {
+                    onResult(
+                        gourmetRepository.searchShops(
+                            keyword = keyword,
+                            lat = lat,
+                            lng = lng,
+                            range = distanceRange.value?.value,
+                            filters = searchFilters.value.toQueryMap(),
+                            start = start,
+                            order = order,
+                            genre = getGenreValue(),
+                            largeArea = largeArea,
+                            middleArea = middleArea,
+                            smallArea = smallArea
+                        )
+                    )
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.kouusei.restaurant.data.api
 
+import com.kouusei.restaurant.data.api.entities.Address
 import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.api.entities.ShopName
@@ -29,6 +30,9 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
         start: Int,
         order: Int?,
         genre: String?,
+        largeArea: String?,
+        middleArea: String?,
+        smallArea: String?,
         filters: Map<String, String>
     ): ApiResult<Results> {
         delay(300)
@@ -42,7 +46,10 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                     filters = filters,
                     start = start,
                     order = order,
-                    genre = genre
+                    genre = genre,
+                    largeArea = largeArea,
+                    middleArea = middleArea,
+                    smallArea = smallArea
                 )
             if (response.results.error != null) {
                 ApiResult.Error(
@@ -109,6 +116,45 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
                 } else {
                     ApiResult.Success(response.results.shop)
                 }
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(code = INTERNALERROR, e.message ?: "Unknown error")
+        }
+    }
+
+    override suspend fun getLargeArea(): ApiResult<List<Address>> {
+        return try {
+            val response = apiService.largeAreaSearch()
+            if (response.results.results_available == 0) {
+                ApiResult.Error(code = NOTFOUNDERROR, message = "Not Found")
+            } else {
+                ApiResult.Success(response.results.large_area)
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(code = INTERNALERROR, e.message ?: "Unknown error")
+        }
+    }
+
+    override suspend fun getMiddleArea(largeArea: String): ApiResult<List<Address>> {
+        return try {
+            val response = apiService.middleAreaSearch(largeArea = largeArea)
+            if (response.results.results_available == 0) {
+                ApiResult.Error(code = NOTFOUNDERROR, message = "Not Found")
+            } else {
+                ApiResult.Success(response.results.middle_area)
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(code = INTERNALERROR, e.message ?: "Unknown error")
+        }
+    }
+
+    override suspend fun getSmallArea(middleArea: String): ApiResult<List<Address>> {
+        return try {
+            val response = apiService.smallAreaSearch(middleArea = middleArea)
+            if (response.results.results_available == 0) {
+                ApiResult.Error(code = NOTFOUNDERROR, message = "Not Found")
+            } else {
+                ApiResult.Success(response.results.small_area)
             }
         } catch (e: Exception) {
             ApiResult.Error(code = INTERNALERROR, e.message ?: "Unknown error")
