@@ -199,6 +199,12 @@ fun AppNavGraph(
     val infiniteTransition = rememberInfiniteTransition()
 
     val scope = rememberCoroutineScope()
+    val refreshListState = {
+        scope.launch {
+            listViewListState.animateScrollToItem(0)
+            mapViewListState.animateScrollToItem(0)
+        }
+    }
     NavHost(navController, startDestination = Map.route) {
         composable(Map.route) {
             when (state) {
@@ -221,10 +227,7 @@ fun AppNavGraph(
                             },
                             onSearch = {
                                 restaurantViewModel.reloadShopList()
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                    mapViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                             suggestions = shopNames
                         )
@@ -232,24 +235,15 @@ fun AppNavGraph(
                         FilterView(
                             onDistanceChange = {
                                 restaurantViewModel.onDistanceRangeChange(it)
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                    mapViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                             onOrderMethodChange = {
                                 restaurantViewModel.onOrderMethodChange(it)
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                    mapViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                             onFilterChange = {
                                 restaurantViewModel.toggleFilter(it)
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                    mapViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                             selectedDistance = distanceRange,
                             selectedOrderMethod = orderMethod,
@@ -258,10 +252,7 @@ fun AppNavGraph(
                             selectedGenre = genre,
                             onSelectedGenreChange = {
                                 restaurantViewModel.onGenreChange(it)
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                    mapViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                         )
 
@@ -290,10 +281,7 @@ fun AppNavGraph(
                                 },
                                 onSearch = {
                                     restaurantViewModel.reloadShopList()
-                                    scope.launch {
-                                        listViewListState.animateScrollToItem(0)
-                                        mapViewListState.animateScrollToItem(0)
-                                    }
+                                    refreshListState()
                                 },
                                 suggestions = shopNames,
                             )
@@ -338,9 +326,7 @@ fun AppNavGraph(
                             },
                             onSearch = {
                                 restaurantViewModel.reloadShopList()
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                             suggestions = shopNames
                         )
@@ -348,21 +334,15 @@ fun AppNavGraph(
                         FilterView(
                             onDistanceChange = {
                                 restaurantViewModel.onDistanceRangeChange(it)
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                             onOrderMethodChange = {
                                 restaurantViewModel.onOrderMethodChange(it)
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                             onFilterChange = {
                                 restaurantViewModel.toggleFilter(it)
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                             selectedDistance = distanceRange,
                             selectedOrderMethod = orderMethod,
@@ -371,9 +351,7 @@ fun AppNavGraph(
                             selectedGenre = genre,
                             onSelectedGenreChange = {
                                 restaurantViewModel.onGenreChange(it)
-                                scope.launch {
-                                    listViewListState.animateScrollToItem(0)
-                                }
+                                refreshListState()
                             },
                         )
 
@@ -398,6 +376,7 @@ fun AppNavGraph(
                                 },
                                 onRefresh = {
                                     restaurantViewModel.reloadShopList()
+                                    refreshListState()
                                 }
                             )
                         } else if (state is RestaurantViewState.Empty) {
