@@ -19,5 +19,11 @@ data class Error(
 data class ShopName(
     val id: String,
     val name: String,
-    val desc: Int
 )
+
+fun Shop.toShopName(): ShopName {
+    return ShopName(
+        id = this.id,
+        name = this.name
+    )
+}

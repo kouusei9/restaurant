@@ -3,6 +3,7 @@ package com.kouusei.restaurant.data.api
 import com.kouusei.restaurant.data.api.entities.Results
 import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.api.entities.ShopName
+import com.kouusei.restaurant.data.api.entities.toShopName
 import com.kouusei.restaurant.data.utils.ApiResult
 import kotlinx.coroutines.delay
 import javax.inject.Inject
@@ -58,14 +59,14 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
 
     override suspend fun searchShopNames(keyword: String): ApiResult<List<ShopName>> {
         return try {
-            val response = apiService.shopNameSearch(keyword = keyword)
+            val response = apiService.gourmetSearch(keyword = keyword)
             if (response.results.error != null) {
                 ApiResult.Error(
                     code = response.results.error.code,
                     message = response.results.error.message
                 )
             } else {
-                ApiResult.Success(response.results.shop)
+                ApiResult.Success(response.results.shop.map { it.toShopName() })
             }
         } catch (e: Exception) {
             ApiResult.Error(code = INTERNALERROR, e.message ?: "Unknown error")
