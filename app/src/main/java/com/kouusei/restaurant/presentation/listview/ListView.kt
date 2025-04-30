@@ -120,7 +120,7 @@ fun RestaurantList(
             state = listState,
             modifier = modifier
                 .fillMaxSize()
-                .padding(start = 10.dp, end = 10.dp)
+                .padding(start = 10.dp, end = 10.dp, bottom = 40.dp)
                 .background(MaterialTheme.colorScheme.background)
         ) {
             if (shops.isNotEmpty()) {

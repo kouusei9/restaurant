@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -34,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -113,33 +114,49 @@ fun RestaurantTopBar(
             .imePadding()
     ) {
         SearchBar(
-            query = keyword,
-            onQueryChange = onKeywordChange,
-            onSearch = {
-                onSearch()
-                active = false
-            },
-            active = active,
-            onActiveChange = { active = it },
-            placeholder = { Text(text = stringResource(R.string.search)) },
-            leadingIcon = {
-                Icon(Icons.Default.Search, contentDescription = "search icon")
-            },
-            trailingIcon = {
-                Row {
-                    if (keyword.isNotEmpty()) {
-                        IconButton(onClick = {
-                            onKeywordChange("")
-                            onSearch()
-                        }) {
-                            Icon(Icons.Default.Close, contentDescription = "clear text")
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = keyword,
+                    onQueryChange = onKeywordChange,
+                    onSearch = {
+                        onSearch()
+                        active = false
+                    },
+                    expanded = active,
+                    onExpandedChange = { active = it },
+                    placeholder = { Text(text = stringResource(R.string.search)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    trailingIcon = {
+                        if (keyword.isNotEmpty()) {
+                            IconButton(onClick = {
+                                onKeywordChange("")
+                                onSearch()
+                            }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "clear text",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
-                    }
-                }
+                        if (keyword.isEmpty() && active) {
+                            Text(text = stringResource(R.string.search_cancel),
+                                modifier = Modifier
+                                    .clickable {
+                                        active = false
+                                    }
+                                    .padding(bottom = 8.dp),
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.primary)
+                        }
+                    },
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
+            expanded = active,
+            onExpandedChange = { active = it },
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize()

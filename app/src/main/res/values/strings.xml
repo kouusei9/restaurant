@@ -10,6 +10,7 @@
 
     <string name="total_count">%d件</string>
     <string name="search">お店を探す</string>
+    <string name="search_cancel">キャンセル</string>
     <string name="order_add_date_asc">保存日順 ↓</string>
     <string name="order_add_date_desc">保存日順 ↑</string>
 

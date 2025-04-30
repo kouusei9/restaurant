@@ -6,7 +6,6 @@ import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.api.entities.ShopName
 import com.kouusei.restaurant.data.api.entities.toShopName
 import com.kouusei.restaurant.data.utils.ApiResult
-import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 const val TAG = "HotPepperGourmetRepositoryImpl"
@@ -35,7 +34,7 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
         smallArea: String?,
         filters: Map<String, String>
     ): ApiResult<Results> {
-        delay(300)
+//        delay(300)
         return try {
             val response =
                 apiService.gourmetSearch(
