@@ -1,7 +1,8 @@
 package com.kouusei.restaurant.presentation.common
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,26 +53,10 @@ fun InlineAddressSelector(
     onConfirm: (String) -> Unit = {},
     onReset: () -> Unit = {},
     onCanceled: () -> Unit = {},
-    height: Dp
+    height: Dp,
+    showList: List<Boolean>,
+    showToggle: (Int) -> Unit,
 ) {
-    val weightLarge by animateFloatAsState(
-        targetValue = if (largeAddress.isEmpty()) 1f else largeAddress.maxOf { it.name.length }.toFloat(),
-        animationSpec = tween(durationMillis = 300),
-        label = "weightLarge"
-    )
-
-    val weightMiddle by animateFloatAsState(
-        targetValue = if (middleAddress.isEmpty()) 1f else middleAddress.maxOf { it.name.length }.toFloat(),
-        animationSpec = tween(durationMillis = 300),
-        label = "weightMiddle"
-    )
-
-    val weightSmall by animateFloatAsState(
-        targetValue = if (smallAddress.isEmpty()) 1f else smallAddress.maxOf { it.name.length }.toFloat(),
-        animationSpec = tween(durationMillis = 300),
-        label = "weightSmall"
-    )
-
     Column(
         modifier = modifier
     ) {
@@ -100,7 +84,7 @@ fun InlineAddressSelector(
                 Icon(Icons.Filled.Clear, contentDescription = "Clear")
             }
         }
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(height - 140.dp)
@@ -113,32 +97,60 @@ fun InlineAddressSelector(
         ) {
             // 大地址选择
             AddressColumn(
-                modifier = Modifier.weight(weightLarge),
                 title = "地域",
                 options = largeAddress,
                 selected = selectedLarge,
-                onSelect = onLargeSelect
+                onSelect = {
+                    onLargeSelect(it)
+                },
+                isShow = showList[0],
+                onShowToggle = {
+                    showToggle(0)
+                }
             )
 
             // 中地址选择
-            selectedLarge?.let {
+            AnimatedVisibility(
+                selectedLarge != null,
+                enter = expandVertically(
+                    animationSpec = tween(durationMillis = 300),
+                    expandFrom = Alignment.Top
+                )
+            ) {
                 AddressColumn(
-                    modifier = Modifier.weight(weightMiddle),
                     title = "エリア",
                     options = middleAddress,
                     selected = selectedMiddle,
-                    onSelect = onMiddleSelect
+                    onSelect = {
+                        onMiddleSelect(it)
+                    },
+                    isShow = showList[1],
+                    onShowToggle = {
+                        showToggle(1)
+                    }
                 )
             }
 
             // 小地址选择
-            selectedMiddle?.let {
+            AnimatedVisibility(
+                selectedMiddle != null,
+                enter = expandVertically(
+                    animationSpec = tween(durationMillis = 300),
+                    expandFrom = Alignment.Top
+                )
+            ) {
                 AddressColumn(
-                    modifier = Modifier.weight(weightSmall),
+//                    modifier = Modifier.weight(weightSmall),
                     title = "場所",
                     options = smallAddress,
                     selected = selectedSmall,
-                    onSelect = onSmallSelect
+                    onSelect = {
+                        onSmallSelect(it)
+                    },
+                    isShow = showList[2],
+                    onShowToggle = {
+                        showToggle(2)
+                    }
                 )
             }
         }
@@ -186,7 +198,9 @@ fun AddressColumn(
     title: String,
     options: List<Address>,
     selected: Address?,
-    onSelect: (Address) -> Unit
+    onSelect: (Address) -> Unit,
+    isShow: Boolean = true,
+    onShowToggle: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     Column(
@@ -194,45 +208,54 @@ fun AddressColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            title,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(8.dp)
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .verticalScroll(scrollState),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            options.forEach { address ->
-                val isSelected = selected == address
-                Spacer(
-                    modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth(0.9f)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                )
+        Row(modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+            .clickable {
+                onShowToggle()
+            }) {
+            Text(
+                text = "$title : ${selected?.name?:""}",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp
+            )
+        }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .clickable {
-                            onSelect(address)
-                        }
-                        .background(
-                            if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                            else Color.Transparent
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = address.name, fontSize = 12.sp,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Gray
+        if (isShow) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .verticalScroll(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                options.forEach { address ->
+                    val isSelected = selected == address
+                    Spacer(
+                        modifier = Modifier
+                            .height(1.dp)
+                            .fillMaxWidth(0.9f)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                     )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .clickable {
+                                onSelect(address)
+                            }
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else Color.Transparent
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = address.name, fontSize = 12.sp,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Gray
+                        )
+                    }
                 }
             }
         }
@@ -269,5 +292,17 @@ fun AddressSelectorViewPreview() {
         selectedSmall = null,
         onSmallSelect = { /* TODO */ },
         height = 800.dp,
+        onConfirm = { /* TODO */ },
+        onReset = { /* TODO */ },
+        onCanceled = { /* TODO */ },
+        showList = listOf(
+            true,
+            false,
+            false
+        ),
+        showToggle = { index ->
+            // Handle the toggle action for the address list
+            // You can update the showList state here based on the index
+        },
     )
 }

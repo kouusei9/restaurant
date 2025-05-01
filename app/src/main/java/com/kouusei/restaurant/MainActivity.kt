@@ -74,6 +74,7 @@ import com.kouusei.restaurant.presentation.common.FilterViewBottom
 import com.kouusei.restaurant.presentation.common.FilterViewTop
 import com.kouusei.restaurant.presentation.detailview.DetailView
 import com.kouusei.restaurant.presentation.detailview.DetailViewModel
+import com.kouusei.restaurant.presentation.entities.AddressState
 import com.kouusei.restaurant.presentation.favoriteview.FavoriteListScreen
 import com.kouusei.restaurant.presentation.favoriteview.FavoriteShopsModel
 import com.kouusei.restaurant.presentation.listview.RestaurantList
@@ -496,7 +497,7 @@ fun AddTopFilterView(
     val selectedMiddleAddress by restaurantViewModel.selectedMiddleAddress.collectAsState()
     val smallAddressList by restaurantViewModel.smallAddressList.collectAsState()
     val selectedSmallAddress by restaurantViewModel.selectedSmallAddress.collectAsState()
-    val isAddressSelected by restaurantViewModel.isSelectedAddress.collectAsState()
+    val addressState by restaurantViewModel.addressState.collectAsState()
 
     // filter status
     val distanceRange by restaurantViewModel.distanceRange.collectAsState()
@@ -538,17 +539,27 @@ fun AddTopFilterView(
         onSmallSelect = {
             restaurantViewModel.onSelectedSmallAddressChange(it)
         },
-        isAddressSelected = isAddressSelected,
+        isAddressSelected = addressState is AddressState.Success,
+        selectedAddress = (addressState as? AddressState.Success)
+            ?.let {
+                it.smallAddress?.name ?: it.middleAddress?.name ?: it.largeAddress?.name
+            } ?: "",
         onAddressSelectedConfirm = {
-            restaurantViewModel.onSelectedAddressChange(true)
+            restaurantViewModel.onAddressStateChange(
+                AddressState.Success(
+                    selectedLargeAddress,
+                    selectedMiddleAddress,
+                    selectedSmallAddress
+                )
+            )
             restaurantViewModel.reloadShopList()
             refreshListState()
         },
         bottomPadding = innerPadding.calculateBottomPadding(),
         topPadding = innerPadding.calculateTopPadding(),
         onAddressSelectedReset = {
-            if (isAddressSelected) {
-                restaurantViewModel.onSelectedAddressChange(false)
+            if (addressState is AddressState.Success) {
+                restaurantViewModel.onAddressStateChange(AddressState.None)
                 restaurantViewModel.reloadShopList()
                 refreshListState()
             }

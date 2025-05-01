@@ -126,6 +126,7 @@ fun FilterViewTop(
     onSmallSelect: (Address) -> Unit,
     onAddressSelectedConfirm: (String) -> Unit,
     isAddressSelected: Boolean = false,
+    selectedAddress: String? = null,
     onAddressSelectedReset: () -> Unit,
     bottomPadding: Dp = 0.dp,
     topPadding: Dp = 0.dp,
@@ -175,7 +176,7 @@ fun FilterViewTop(
             AreaFilterChipWithDropdownMenu(
                 label = stringResource(R.string.filter_area),
                 isSelected = isAddressSelected,
-                selected = selectedSmall?.name ?: selectedMiddle?.name ?: selectedLarge?.name,
+                selected = selectedAddress,
                 largeAddress = largeAddress,
                 selectedLarge = selectedLarge,
                 onLargeSelect = onLargeSelect,
@@ -257,6 +258,26 @@ fun AreaFilterChipWithDropdownMenu(
     var areaExpand by remember { mutableStateOf(false) }
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
+    var showList = remember {
+        mutableStateOf(
+            listOf(
+                true,
+                false,
+                false
+            )
+        )
+    }
+    val showToggle = { index: Int ->
+        val isShow = showList.value[index]
+        showList.value = showList.value.mapIndexed { i, b ->
+            if (isShow) {
+                i == index + 1
+            } else {
+                if (i == index) !b else false
+            }
+        }
+    }
+
     FilterChip(
         label = if (isSelected) selected!! else label,
         isSelected = isSelected,
@@ -275,13 +296,22 @@ fun AreaFilterChipWithDropdownMenu(
             modifier = Modifier.fillMaxSize(),
             largeAddress = largeAddress,
             selectedLarge = selectedLarge,
-            onLargeSelect = onLargeSelect,
+            onLargeSelect = {
+                onLargeSelect(it)
+                showList.value = listOf(false, true, false)
+            },
             middleAddress = middleAddress,
             selectedMiddle = selectedMiddle,
-            onMiddleSelect = onMiddleSelect,
+            onMiddleSelect = {
+                onMiddleSelect(it)
+                showList.value = listOf(false, false, true)
+            },
             smallAddress = smallAddress,
             selectedSmall = selectedSmall,
-            onSmallSelect = onSmallSelect,
+            onSmallSelect = {
+                onSmallSelect(it)
+                showList.value = listOf(false, false, true)
+            },
             onConfirm = {
                 areaExpand = false
                 onConfirm(it)
@@ -291,7 +321,9 @@ fun AreaFilterChipWithDropdownMenu(
                 areaExpand = false
                 onReset()
             },
-            height = screenHeight - bottomPadding - topPadding
+            height = screenHeight - bottomPadding - topPadding,
+            showList = showList.value,
+            showToggle = showToggle
         )
     }
 }

@@ -14,6 +14,7 @@ import com.kouusei.restaurant.presentation.common.DistanceRange
 import com.kouusei.restaurant.presentation.common.Filter
 import com.kouusei.restaurant.presentation.common.Genre
 import com.kouusei.restaurant.presentation.common.OrderMethod
+import com.kouusei.restaurant.presentation.entities.AddressState
 import com.kouusei.restaurant.presentation.entities.SearchFilters
 import com.kouusei.restaurant.presentation.entities.ShopSummary
 import com.kouusei.restaurant.presentation.mappers.toLatLngBounds
@@ -143,12 +144,10 @@ class RestaurantViewModel @Inject constructor(
         _selectedSmallAddress.value = address
     }
 
-    private val _isSelectedAddress = MutableStateFlow<Boolean>(false)
-    val isSelectedAddress = _isSelectedAddress.asStateFlow()
-    fun onSelectedAddressChange(isSelected: Boolean) {
-        _isSelectedAddress.value = isSelected
-        // address is conflict with distance range
-        _distanceRange.value = null
+    private val _addressState = MutableStateFlow<AddressState>(AddressState.None)
+    val addressState = _addressState.asStateFlow()
+    fun onAddressStateChange(addressState: AddressState) {
+        _addressState.value = addressState
     }
 
     fun loadSmallAddressList() {
@@ -182,7 +181,7 @@ class RestaurantViewModel @Inject constructor(
         _searchFilters.value = SearchFilters()
         _distanceRange.value = DistanceRange.RANGE_1000M
         _genres.value = null
-        _isSelectedAddress.value = false
+        _addressState.value = AddressState.None
     }
 
     fun onKeyWordChange(keyword: String) {
@@ -197,7 +196,7 @@ class RestaurantViewModel @Inject constructor(
     fun onDistanceRangeChange(distanceRange: DistanceRange?) {
         _distanceRange.value = distanceRange
         // address is conflict with distance range
-        _isSelectedAddress.value = false
+        _addressState.value = AddressState.None
         reloadShopList()
     }
 
@@ -440,12 +439,12 @@ class RestaurantViewModel @Inject constructor(
         var largeArea: String? = null
         var middleArea: String? = null
         var smallArea: String? = null
-        if (isSelectedAddress.value) {
-            smallArea = selectedSmallAddress.value?.code
+        if (addressState.value is AddressState.Success) {
+            smallArea = (addressState.value as AddressState.Success).smallAddress?.code
             if (smallArea == null) {
-                middleArea = selectedMiddleAddress.value?.code
+                middleArea = (addressState.value as AddressState.Success).middleAddress?.code
                 if (middleArea == null) {
-                    largeArea = selectedLargeAddress.value?.code
+                    largeArea = (addressState.value as AddressState.Success).largeAddress?.code
                 }
             }
         }
@@ -487,7 +486,7 @@ class RestaurantViewModel @Inject constructor(
                 }
             } else {
                 // keyword is empty
-                if (isSelectedAddress.value) {
+                if (addressState.value is AddressState.Success) {
                     onResult(
                         gourmetRepository.searchShops(
                             keyword = keyword,
