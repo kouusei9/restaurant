@@ -6,11 +6,18 @@ Androidアプリ開発課題に対応するポートフォリオ用アプリで�
 ### アプリ名
 レストランメモ(Restaurant Memo)
 
+### スクリーンショット
+<img src="https://github.com/user-attachments/assets/76f1a872-35cc-498a-90d1-069b8d1f129f" width = '120'>
+<img src="https://github.com/user-attachments/assets/89ab4eec-c014-44b0-a5ff-0b7365a7783d" width = '120'>
+<img src="https://github.com/user-attachments/assets/c9ca457d-c75a-4e89-a64b-b2c3f0475614" width = '120'>
+<img src="https://github.com/user-attachments/assets/25ac6174-e2d5-4b78-9984-c77d2f23b396" width = '120'>
+
 #### コンセプト
 
 **「行ってみたいお店を簡単に見つけて、地図で確認し、あとで行けるように保存する」**
 ユーザーが気になる飲食店を検索し、一覧や地図で直感的にチェックでき、気に入った店舗は“お気に入り”として保存できるようにすることで、スムーズな飲食店探しをサポートします。
 
+#### 
 
 #### こだわったポイント
 - **Jetpack Composeによる完全UI構築**  
