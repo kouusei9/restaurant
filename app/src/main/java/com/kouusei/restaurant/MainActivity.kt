@@ -424,6 +424,7 @@ fun AppNavGraph(
 
                 )
                 FavoriteListScreen(
+                    favoriteViewModel = favoriteShopsModel,
                     modifier = Modifier.fillMaxSize(),
                     viewState = favoriteState,
                     onNavDetail = {
@@ -434,9 +435,6 @@ fun AppNavGraph(
                     },
                     onFavoriteToggled = {
                         favoriteShopsModel.toggleFavorite(it)
-                    },
-                    onOrderToggled = {
-                        favoriteShopsModel.toggleOrder()
                     }
                 )
             }

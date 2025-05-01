@@ -100,7 +100,7 @@ class HotPepperGourmetRepositoryImpl @Inject constructor(private val apiService:
         }
     }
 
-    override suspend fun getShopsByIds(ids: Set<String>): ApiResult<List<Shop>> {
+    override suspend fun getShopsByIds(ids: List<String>): ApiResult<List<Shop>> {
         return try {
             val response =
                 apiService.gourmetSearch(id = ids.joinToString(","))

@@ -43,7 +43,7 @@ interface HotPepperGourmetRepository {
      * in: set of shop ids
      * out: list of shops detail.
      */
-    suspend fun getShopsByIds(ids: Set<String>): ApiResult<List<Shop>>
+    suspend fun getShopsByIds(ids: List<String>): ApiResult<List<Shop>>
 
     suspend fun getLargeArea(): ApiResult<List<Address>>
 

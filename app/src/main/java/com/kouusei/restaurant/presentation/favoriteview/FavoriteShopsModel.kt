@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kouusei.restaurant.data.api.HotPepperGourmetRepository
+import com.kouusei.restaurant.data.api.entities.Shop
 import com.kouusei.restaurant.data.local.FavoriteShop
 import com.kouusei.restaurant.data.local.FavoriteShopRepository
 import com.kouusei.restaurant.data.utils.ApiResult
@@ -27,13 +28,26 @@ class FavoriteShopsModel @Inject constructor(
     val hotPepperGourmetRepository: HotPepperGourmetRepository
 ) : ViewModel() {
 
-    private var _shopIds = MutableStateFlow<Set<FavoriteShop>>(emptySet())
+    private var _shopIds = MutableStateFlow<List<FavoriteShop>>(emptyList())
     val shopIds = _shopIds.asStateFlow()
 
     private val _shops = MutableStateFlow<List<FavoriteShopSummary>>(emptyList())
+    private val perPage = 10
 
     private val _favoriteState = MutableStateFlow<FavoriteState>(FavoriteState.Loading)
     val favoriteState = _favoriteState.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isReachEnd = MutableStateFlow(false)
+    val isReachEnd: StateFlow<Boolean> = _isReachEnd.asStateFlow()
+
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+
+    private val _isAscending = MutableStateFlow(true)
+    val isAscending: StateFlow<Boolean> = _isAscending.asStateFlow()
 
     // filter keyword
     private val _keyword = MutableStateFlow<String>("")
@@ -47,10 +61,30 @@ class FavoriteShopsModel @Inject constructor(
             favoriteShopRepository.getAllFavoriteShops().stateIn(
                 viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet()
             ).collect {
-                _shopIds.value = it
+                if (isAscending.value) {
+                    _shopIds.value = it.sortedBy { it.timestamp }
+                } else {
+                    _shopIds.value = it.sortedByDescending { it.timestamp }
+                }
                 Log.d(TAG, ": _shopIds.value = $it")
-                loadShops(it.map { it.shopId }.toSet())
+                reload()
             }
+        }
+    }
+
+    fun onLoadMore() {
+        _isLoadingMore.value = true
+        viewModelScope.launch {
+            val ids = _shopIds.value.map { it.shopId }
+                .drop(_shops.value.size)
+                .take(perPage)
+                .toList()
+            if (ids.isEmpty()) {
+                _isReachEnd.value = true
+                _isLoadingMore.value = false
+                return@launch
+            }
+            loadShops(ids, ::onAddMore)
         }
     }
 
@@ -75,20 +109,17 @@ class FavoriteShopsModel @Inject constructor(
     }
 
     fun toggleOrder() {
-        if (favoriteState.value is FavoriteState.Success) {
-            _favoriteState.value =
-                FavoriteState.Success((favoriteState.value as FavoriteState.Success).shops.reversed())
+        _isAscending.value = !_isAscending.value
+        if (isAscending.value) {
+            _shopIds.value = _shopIds.value.sortedBy { it.timestamp }
+        } else {
+            _shopIds.value = _shopIds.value.sortedByDescending { it.timestamp }
         }
-
+        reload()
     }
 
-    private suspend fun loadShops(ids: Set<String>) {
-        if (ids.isEmpty()) {
-            _shops.value = emptyList()
-            _favoriteState.value = FavoriteState.Empty
-            return
-        }
-        val result = hotPepperGourmetRepository.getShopsByIds(ids)
+    private fun onReload(result: ApiResult<List<Shop>>) {
+        _isLoading.value = false
         when (result) {
             is ApiResult.Error -> {
                 _favoriteState.value = FavoriteState.Error(result.message)
@@ -99,20 +130,85 @@ class FavoriteShopsModel @Inject constructor(
                     _shops.value = emptyList()
                     _favoriteState.value = FavoriteState.Empty
                 } else {
-                    val favoriteShops = result.data.map { it.toShopSummary() }
+                    val favoriteShops = mutableListOf<FavoriteShopSummary>()
+                    favoriteShops.addAll(result.data.map { it.toShopSummary() }
                         .map { shopSummary ->
                             FavoriteShopSummary(
                                 shopSummary,
                                 _shopIds.value.find { it.shopId == shopSummary.id }?.timestamp
                                     ?: System.currentTimeMillis()
                             )
-                        }.sortedBy { it.timestamp }
+                        })
+                    if (isAscending.value) {
+                        favoriteShops.sortBy { it.timestamp }
+                    } else {
+                        favoriteShops.sortByDescending { it.timestamp }
+                    }
                     _favoriteState.value =
                         FavoriteState.Success(favoriteShops)
 
                     _shops.value = favoriteShops
+                    toggleReachEnd()
                 }
             }
         }
+    }
+
+    private fun toggleReachEnd() {
+        Log.d(
+            TAG,
+            "toggleReachEnd: _shops.value.size = ${_shops.value.size}, _shopIds.value.size = ${_shopIds.value.size}"
+        )
+        _isReachEnd.value = _shops.value.size >= _shopIds.value.size
+    }
+
+    private fun onAddMore(result: ApiResult<List<Shop>>) {
+        _isLoadingMore.value = false
+        when (result) {
+            is ApiResult.Error -> {
+                _favoriteState.value = FavoriteState.Error(result.message)
+            }
+
+            is ApiResult.Success -> {
+                val shops = mutableListOf<FavoriteShopSummary>()
+                shops.addAll(_shops.value)
+                val favoriteShops = result.data.map { it.toShopSummary() }
+                    .map { shopSummary ->
+                        FavoriteShopSummary(
+                            shopSummary,
+                            _shopIds.value.find { it.shopId == shopSummary.id }?.timestamp
+                                ?: System.currentTimeMillis()
+                        )
+                    }
+                shops.addAll(favoriteShops)
+                if (isAscending.value) {
+                    shops.sortBy { it.timestamp }
+                } else {
+                    shops.sortByDescending { it.timestamp }
+                }
+                _shops.value = shops
+                _favoriteState.value = FavoriteState.Success(shops)
+                toggleReachEnd()
+            }
+        }
+    }
+
+    fun reload() {
+        viewModelScope.launch {
+            if (_shopIds.value.isEmpty()) {
+                _shops.value = emptyList()
+                _favoriteState.value = FavoriteState.Empty
+                return@launch
+            }
+            _isLoading.value = true
+            _isReachEnd.value = false
+            loadShops(_shopIds.value.map { it.shopId }.take(perPage).toList(), ::onReload)
+        }
+    }
+
+
+    private suspend fun loadShops(ids: List<String>, onResult: (ApiResult<List<Shop>>) -> Unit) {
+        val result = hotPepperGourmetRepository.getShopsByIds(ids)
+        onResult(result)
     }
 }

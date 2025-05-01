@@ -252,22 +252,25 @@ fun RestaurantItemBar(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 8.dp, end = 8.dp)
-                .wrapContentSize()
-                .clickable {
-                    onLoveToggled(shop.id)
-                },
+                .wrapContentSize(),
             contentAlignment = Alignment.Center
         ) {
             Column {
                 if (isLike) {
                     Icon(
                         Icons.Default.Favorite, contentDescription = "love icon",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            onLoveToggled(shop.id)
+                        },
                     )
                 } else {
                     Icon(
                         Icons.Default.FavoriteBorder, contentDescription = "love icon",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            onLoveToggled(shop.id)
+                        },
                     )
                 }
                 if (isLocation) {
@@ -276,7 +279,7 @@ fun RestaurantItemBar(
                         contentDescription = "location icon",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
-                            .padding(top = 4.dp)
+                            .padding(top = 8.dp)
                             .clickable {
                                 onLocationToggled(shop.id)
                             }
