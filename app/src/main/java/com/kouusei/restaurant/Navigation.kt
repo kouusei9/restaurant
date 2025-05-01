@@ -130,6 +130,7 @@ fun RestaurantTopBar(
                         if (keyword.isNotEmpty()) {
                             IconButton(onClick = {
                                 onKeywordChange("")
+                                active = false
                                 onSearch()
                             }) {
                                 Icon(

@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -80,7 +81,8 @@ fun RestaurantList(
     onNavDetail: (id: String) -> Unit,
     onIsFavorite: (id: String) -> Boolean,
     onFavoriteToggled: (id: String) -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onLocationToggled: (id: String) -> Unit = {}
 ) {
     Log.d(TAG, "RestaurantList: Enter, isLoadingMore: $isLoadingMore, isReachEnd: $isReachEnd")
     val shops = restaurantViewState.shopList
@@ -140,7 +142,9 @@ fun RestaurantList(
                         shop = shop,
                         onNavDetail = onNavDetail,
                         isLike = onIsFavorite(shop.id),
-                        onLoveToggled = onFavoriteToggled
+                        onLoveToggled = onFavoriteToggled,
+                        isLocation = true,
+                        onLocationToggled = onLocationToggled,
                     )
                 }
             }
@@ -168,7 +172,9 @@ fun RestaurantItemBar(
     shop: ShopSummary,
     isLike: Boolean = false,
     onNavDetail: (id: String) -> Unit,
-    onLoveToggled: (id: String) -> Unit = {}
+    onLoveToggled: (id: String) -> Unit = {},
+    isLocation: Boolean = false,
+    onLocationToggled: (id: String) -> Unit = {},
 ) {
     Box(modifier = modifier
         .padding(top = 4.dp, bottom = 4.dp)
@@ -252,16 +258,30 @@ fun RestaurantItemBar(
                 },
             contentAlignment = Alignment.Center
         ) {
-            if (isLike) {
-                Icon(
-                    Icons.Default.Favorite, contentDescription = "love icon",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            } else {
-                Icon(
-                    Icons.Default.FavoriteBorder, contentDescription = "love icon",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            Column {
+                if (isLike) {
+                    Icon(
+                        Icons.Default.Favorite, contentDescription = "love icon",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.FavoriteBorder, contentDescription = "love icon",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                if (isLocation) {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = "location icon",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .clickable {
+                                onLocationToggled(shop.id)
+                            }
+                    )
+                }
             }
         }
     }

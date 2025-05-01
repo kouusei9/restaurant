@@ -184,7 +184,6 @@ fun AppNavGraph(
 
     val state by restaurantViewModel.restaurantViewState.collectAsState()
 
-
     val isLoading by restaurantViewModel.isLoading.collectAsState()
     val isReloading by restaurantViewModel.isReloading.collectAsState()
     val isReachEnd by restaurantViewModel.isReachEnd.collectAsState()
@@ -361,6 +360,16 @@ fun AppNavGraph(
                                     onRefresh = {
                                         restaurantViewModel.reloadShopList()
                                         refreshListState()
+                                    },
+                                    onLocationToggled = { selectedId ->
+                                        navController.popBackStack()
+                                        scope.launch {
+                                            Log.d(TAG, "AppNavGraph: scroll to item $it")
+                                            (state as RestaurantViewState.Success).shopList.firstOrNull { it.id == selectedId }
+                                                ?.let { shop ->
+                                                    restaurantViewModel.onSelectedShopChange(shop)
+                                                }
+                                        }
                                     }
                                 )
                             } else if (state is RestaurantViewState.Empty) {

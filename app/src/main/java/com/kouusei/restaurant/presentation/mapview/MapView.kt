@@ -165,6 +165,7 @@ fun Map(
     LaunchedEffect(selectedShop) {
         selectedShop?.let { shop ->
             scope.launch {
+                Log.d(TAG, "Map: cameraPositionState changed to ${shop.name}")
                 cameraPositionState.animate(
                     update = CameraUpdateFactory.newLatLngZoom(shop.location, 16f),
                     durationMs = 500
